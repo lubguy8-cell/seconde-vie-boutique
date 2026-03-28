@@ -1,41 +1,147 @@
-<div style="background:#f9f9f9; padding:20px; border-radius:10px; margin-bottom:20px;">
-    <input type="text" id="nom" placeholder="Nom de l'article">
-    <input type="number" id="prix" placeholder="Prix ($)">
-    
-    <label style="display:block; margin:10px 0; font-weight:bold;">📷 Photo de l'article :</label>
-    <input type="file" id="fichier-image" accept="image/*">
-    
-    <input type="text" id="fours" placeholder="Fournisseur">
-    <select id="stk">
-        <option value="infini">Stock Infini</option>
-        <option value="1">1 exemplaire</option>
-        <option value="5">5 exemplaires</option>
-    </select>
-    <button onclick="ajouter()" style="background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold;">PUBLIER L'ARTICLE</button>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DG SECONDE VIE - Administration</title>
+    <style>
+        :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #2a2a2a; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--noir); color: var(--blanc); display: flex; }
+        
+        /* Sidebar Luxe */
+        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; padding: 20px; border-right: 2px solid var(--or); }
+        .sidebar h2 { color: var(--or); text-align: center; border-bottom: 2px solid var(--or); padding-bottom: 15px; letter-spacing: 2px; }
+        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; border: 1px solid transparent; }
+        .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        
+        /* Main Content */
+        .main { margin-left: 300px; padding: 30px; width: calc(100% - 340px); }
+        .section { display: none; background: var(--gris); padding: 25px; border-radius: 15px; border: 1px solid #444; }
+        .active-sec { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Formulaire Style DG */
+        .form-box { background: #111; padding: 25px; border-radius: 12px; border: 1px solid var(--or); margin-bottom: 30px; }
+        input, select { background: #222; color: white; border: 1px solid #444; padding: 12px; margin: 8px 0; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        input:focus { border-color: var(--or); outline: none; }
+        
+        /* Bouton Publier Or */
+        .btn-publier { background: var(--or); color: var(--noir); border: none; padding: 15px 30px; cursor: pointer; font-weight: bold; border-radius: 8px; width: 100%; font-size: 1.1em; transition: 0.3s; margin-top: 10px; }
+        .btn-publier:hover { background: #b8962d; transform: scale(1.02); }
+
+        /* Tableaux */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111; }
+        th { background: var(--or); color: var(--noir); padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #333; }
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
+        .badge-attente { background: #554400; color: var(--or); border: 1px solid var(--or); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>SECONDE VIE</h2>
+    <div class="menu-item active" onclick="ouvrirSection('articles', this)">📦 Gérer Boutique</div>
+    <div class="menu-item" onclick="ouvrirSection('commandes', this)">📋 Commandes Reçues</div>
+</div>
+
+<div class="main">
+    <div id="articles" class="section active-sec">
+        <h1 style="color:var(--or)">Ajouter un Chef-d'œuvre</h1>
+        <div class="form-box">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="text" id="nom" placeholder="Nom de l'article">
+                <input type="number" id="prix" placeholder="Prix en Dollar ($)">
+            </div>
+            
+            <label style="display:block; margin-top:15px; color:var(--or); font-weight:bold;">📷 Sélectionner la photo dans ta galerie :</label>
+            <input type="file" id="fichier-image" accept="image/*" style="border: 1px dashed var(--or); padding: 20px;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <input type="text" id="fours" placeholder="Nom du Fournisseur">
+                <select id="stk">
+                    <option value="infini">Stock Infini (Portraits)</option>
+                    <option value="1">1 pièce unique (Mode)</option>
+                    <option value="5">Série limitée (5 pièces)</option>
+                </select>
+            </div>
+            <button class="btn-publier" onclick="ajouter()">🚀 PUBLIER SUR LA BOUTIQUE</button>
+        </div>
+
+        <table id="table-art">
+            <thead><tr><th>Aperçu</th><th>Produit</th><th>Prix</th><th>Stock</th><th>Action</th></tr></thead>
+            <tbody id="corps-art"></tbody>
+        </table>
+    </div>
+
+    <div id="commandes" class="section">
+        <h1 style="color:var(--or)">Suivi des Ventes</h1>
+        <table id="table-cmd">
+            <thead><tr><th>Date</th><th>Client</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Action</th></tr></thead>
+            <tbody id="corps-cmd"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-async function ajouter() {
-    const inputImage = document.getElementById('fichier-image');
-    if (inputImage.files.length === 0) return alert("Choisis une photo DG !");
-
-    // On prépare les données pour l'envoi de fichier
-    const formData = new FormData();
-    formData.append('nom', document.getElementById('nom').value);
-    formData.append('prix', document.getElementById('prix').value);
-    formData.append('image', inputImage.files[0]); // Le fichier lui-même
-    formData.append('fournisseur', document.getElementById('fours').value);
-    formData.append('stock', document.getElementById('stk').value);
-
-    const res = await fetch('/api/produits', {
-        method: 'POST',
-        body: formData // On envoie le FormData au lieu du JSON
-    });
-
-    if(res.ok) {
-        alert("Article publié avec succès !");
-        chargerArticles();
+    function ouvrirSection(id, el) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        document.getElementById(id).classList.add('active-sec');
+        el.classList.add('active');
+        if(id === 'articles') chargerArticles();
+        if(id === 'commandes') chargerCommandes();
     }
-}
-// Garde le reste de tes fonctions (chargerArticles, chargerCommandes, etc.)
+
+    async function ajouter() {
+        const inputImage = document.getElementById('fichier-image');
+        if (inputImage.files.length === 0) return alert("DG, n'oublie pas de choisir la photo !");
+
+        const formData = new FormData();
+        formData.append('nom', document.getElementById('nom').value);
+        formData.append('prix', document.getElementById('prix').value);
+        formData.append('image', inputImage.files[0]);
+        formData.append('fournisseur', document.getElementById('fours').value);
+        formData.append('stock', document.getElementById('stk').value);
+
+        const res = await fetch('/api/produits', { method: 'POST', body: formData });
+        if(res.ok) {
+            alert("✅ Article ajouté avec succès !");
+            chargerArticles();
+        }
+    }
+
+    async function chargerArticles() {
+        const res = await fetch('/api/produits');
+        const data = await res.json();
+        document.getElementById('corps-art').innerHTML = data.map(p => `
+            <tr>
+                <td><img src="${p.image}" style="width:50px; height:50px; border-radius:5px; border:1px solid var(--or)"></td>
+                <td>${p.nom}</td>
+                <td style="color:var(--or); font-weight:bold">${p.prix} $</td>
+                <td>${p.stock}</td>
+                <td><button onclick="suppr(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">✖</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function chargerCommandes() {
+        const res = await fetch('/api/commandes');
+        const data = await res.json();
+        document.getElementById('corps-cmd').innerHTML = data.map(c => `
+            <tr>
+                <td>${c.date}</td>
+                <td>${c.client.nom}<br><small>${c.client.telephone}</small></td>
+                <td style="color:var(--or)">${c.total} $</td>
+                <td><b>${c.paiement}</b></td>
+                <td><span class="badge badge-attente">${c.statut}</span></td>
+                <td><button onclick="valider('${c.id}','${c.client.telephone}','${c.total}')" style="background:#25D366; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">WhatsApp</button></td>
+            </tr>
+        `).join('');
+    }
+
+    setInterval(chargerCommandes, 30000);
+    window.onload = () => { chargerArticles(); chargerCommandes(); };
 </script>
+</body>
+</html>
