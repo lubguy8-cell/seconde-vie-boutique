@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECONDE VIE - Boutique Officielle</title>
+    <style>
+        :root { --noir: #1a1a1a; --or: #D4AF37; --gris: #f4f4f4; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); }
+        
+        /* En-tête Luxe */
+        .header { background: var(--noir); color: white; padding: 40px 20px; text-align: center; border-bottom: 4px solid var(--or); }
+        .header h1 { margin: 0; font-size: 2.5em; letter-spacing: 4px; color: var(--or); }
+        
+        /* Sélecteur de monnaie */
+        .monnaie-box { margin-top: 15px; background: #333; display: inline-block; padding: 8px 15px; border-radius: 20px; color: white; }
+        select { background: none; color: var(--or); border: none; font-weight: bold; cursor: pointer; font-size: 1em; }
+
+        /* Grille des produits */
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 40px 20px; max-width: 1200px; margin: auto; }
+        .carte { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
+        .carte:hover { transform: translateY(-5px); }
+        .carte img { width: 100%; height: 300px; object-fit: cover; }
+        .infos { padding: 15px; text-align: center; }
+        .infos h3 { margin: 10px 0; color: var(--noir); text-transform: uppercase; font-size: 1.1em; }
+        .prix { font-size: 1.3em; font-weight: bold; color: var(--noir); }
+
+        /* Bouton Commander */
+        .btn-wa { display: block; background: #25D366; color: white; text-decoration: none; padding: 12px; font-weight: bold; text-align: center; margin-top: 10px; border-radius: 8px; transition: 0.3s; }
+        .btn-wa:hover { background: #1ebe57; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>SECONDE VIE</h1>
+        <p>L'Art du Design & de la Mode à Kinshasa</p>
+        <div class="monnaie-box">
+            Afficher les prix en : 
+            <select id="devise" onchange="chargerBoutique()">
+                <option value="$">Dollars ($)</option>
+                <option value="FC">Francs Congolais (FC)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container" id="liste-produits">
+        </div>
+
+    <script>
+        const TAUX = 2850; // Taux actuel à Kinshasa (ajustable)
+
+        async function chargerBoutique() {
+            const reponse = await fetch('/api/produits');
+            const produits = await reponse.json();
+            const devise = document.getElementById('devise').value;
+            const container = document.getElementById('liste-produits');
+            
+            if(produits.length === 0) {
+                container.innerHTML = "<p style='grid-column: 1/-1; color: #666;'>Aucun article en stock pour le moment, DG.</p>";
+                return;
+            }
+
+            container.innerHTML = produits.map(p => {
+                const prixAffiche = devise === 'FC' ? (p.prix * TAUX).toLocaleString() : p.prix;
+                const messageWA = encodeURIComponent(`Bonjour SECONDE VIE, je souhaite commander l'article : ${p.nom} au prix de ${prixAffiche} ${devise}.`);
+                
+                return `
+                    <div class="carte">
+                        <img src="${p.image}">
+                        <div class="infos">
+                            <h3>${p.nom}</h3>
+                            <div class="prix">${prixAffiche} ${devise}</div>
+                            <a href="https://wa.me/243895373383?text=${messageWA}" target="_blank" class="btn-wa">
+                                COMMANDER SUR WHATSAPP
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Lancer le chargement au démarrage
+        chargerBoutique();
+    </script>
+</body>
+</html>

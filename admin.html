@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>DG - GESTION SECONDE VIE</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; background: #f0f0f0; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; font-size: 1.5em; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #1a1a1a; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #444; }
+        #aperçu { width: 100%; margin-top: 10px; border-radius: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h1>ESPACE DG - AJOUT</h1>
+        
+        <input type="text" id="nom" placeholder="Nom de l'article (ex: Veste Vintage)">
+        <input type="number" id="prix" placeholder="Prix en Dollars ($)">
+        
+        <label style="display:block; margin-top:15px; font-size: 0.9em; color: #666;">Photo de l'article :</label>
+        <input type="file" id="photo" accept="image/*" onchange="voirPhoto()">
+        <img id="aperçu">
+
+        <button onclick="publier()">PUBLIER SUR LA BOUTIQUE</button>
+    </div>
+
+    <script>
+        let imageBase64 = "";
+
+        // Fonction pour transformer la photo en texte pour le serveur
+        function voirPhoto() {
+            const fichier = document.getElementById('photo').files[0];
+            const reader = new FileReader();
+            const imgElement = document.getElementById('aperçu');
+
+            reader.onloadend = function() {
+                imageBase64 = reader.result;
+                imgElement.src = imageBase64;
+                imgElement.style.display = "block";
+            }
+            if (fichier) { reader.readAsDataURL(fichier); }
+        }
+
+        async function publier() {
+            const nom = document.getElementById('nom').value;
+            const prix = document.getElementById('prix').value;
+
+            if(!nom || !prix || !imageBase64) return alert("DG, remplissez tout !");
+
+            const reponse = await fetch('/api/produits', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nom, prix, image: imageBase64 })
+            });
+
+            if(reponse.ok) {
+                alert("Article publié avec succès !");
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
