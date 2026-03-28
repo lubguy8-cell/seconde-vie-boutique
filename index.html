@@ -8,23 +8,16 @@
         :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #f9f9f9; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); }
         header { background: var(--noir); color: var(--or); padding: 20px; text-align: center; border-bottom: 3px solid var(--or); position: sticky; top: 0; z-index: 100; }
-        
-        .panier-btn { position: fixed; right: 20px; top: 85px; background: var(--or); color: var(--noir); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
+        .panier-btn { position: fixed; right: 20px; top: 85px; background: var(--or); color: var(--noir); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 99; }
         .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 30px; }
         .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.3s; }
-        .carte:hover { transform: translateY(-5px); }
         .carte img { width: 100%; height: 250px; object-fit: cover; }
         .info { padding: 15px; text-align: center; }
-        .stock-info { font-size: 0.8em; color: #666; margin-bottom: 10px; }
-        .prix { font-size: 1.4em; color: var(--or); font-weight: bold; }
-        
-        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; }
-
-        /* Modal Panier */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 12px; }
-        .article-panier { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .prix { font-size: 1.4em; color: var(--or); font-weight: bold; margin: 10px 0; }
+        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 90%; max-width: 450px; border-radius: 12px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -41,33 +34,34 @@
 
 <div id="panier-modal" class="modal">
     <div class="modal-content">
-        <h2>Ma Commande</h2>
+        <h2 style="border-bottom: 2px solid var(--or); padding-bottom: 10px;">Ma Commande</h2>
         <div id="panier-liste"></div>
-        <hr>
         <p><b>Total Articles : <span id="total-prix">0</span> $</b></p>
         
-        <h3>Infos Livraison & Paiement</h3>
-        <input type="text" id="client-nom" placeholder="Ton Nom Complet" style="width:95%; padding:10px; margin-bottom:10px;">
-        <input type="tel" id="client-tel" placeholder="N° WhatsApp (Ex: +243...)" style="width:95%; padding:10px; margin-bottom:10px;">
+        <hr>
+        <h4>Tes Informations</h4>
+        <input type="text" id="client-nom" placeholder="Nom Complet">
+        <input type="tel" id="client-tel" placeholder="N° WhatsApp (Ex: +243...)">
         
-        <select id="moyen-paiement" style="width:100%; padding:10px; margin-bottom:10px;">
-            <option value="Orange Money">Orange Money</option>
-            <option value="M-Pesa">M-Pesa</option>
-            <option value="En espèces à la livraison">En espèces à la livraison</option>
+        <h4>Paiement & Livraison</h4>
+        <select id="moyen-paiement">
+            <option value="Orange Money">🟠 Orange Money</option>
+            <option value="M-Pesa">🔴 M-Pesa</option>
+            <option value="En espèces à la livraison">💵 En espèces à la livraison</option>
         </select>
 
-        <select id="frais-livraison" onchange="calculerTotal()" style="width:100%; padding:10px; margin-bottom:10px;">
-            <option value="0">Livraison : À emporter (Gratuit)</option>
+        <select id="frais-livraison" onchange="calculerTotal()">
+            <option value="0">Retrait à l'agence (Gratuit)</option>
             <option value="5">Gombe / Lingwala (5$)</option>
             <option value="7">Limete / Ngaliema (7$)</option>
             <option value="10">Autres communes (10$)</option>
         </select>
         
-        <p><i>Délai estimé : 24h à 48h selon l'article.</i></p>
+        <p style="font-size: 0.8em; color: gray;">Délai de livraison : 24h - 48h</p>
         <h2 id="grand-total" style="color:var(--or)">Total : 0 $</h2>
         
-        <button class="btn-ajout" onclick="envoyerCommande()">VALIDER MA COMMANDE</button>
-        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; margin-top:10px;">Fermer</button>
+        <button class="btn-ajout" onclick="envoyerCommande()">VALIDER LA COMMANDE</button>
+        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:10px;">Annuler</button>
     </div>
 </div>
 
@@ -80,12 +74,11 @@
         const produits = await res.json();
         document.getElementById('boutique-liste').innerHTML = produits.map(p => `
             <div class="carte">
-                <img src="${p.image}" alt="${p.nom}">
+                <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Indisponible'">
                 <div class="info">
-                    <div class="stock-info">${p.stock === 'infini' ? '✅ Disponible' : '🔥 Seulement ' + p.stock + ' restant(s)'}</div>
+                    <div style="font-size:0.7em; color:gray">${p.stock === 'infini' ? '✅ DISPONIBLE' : '🔥 PLUS QUE ' + p.stock}</div>
                     <h3>${p.nom}</h3>
                     <div class="prix">${p.prix} $</div>
-                    <p style="font-size:0.8em; color:grey">Vendeur: ${p.fournisseur}</p>
                     <button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix})">AJOUTER AU PANIER</button>
                 </div>
             </div>
@@ -95,25 +88,23 @@
     function ajouterAuPanier(nom, prix) {
         panier.push({nom, prix});
         document.getElementById('panier-count').innerText = panier.length;
-        alert(nom + " ajouté au panier !");
+        alert("Ajouté !");
     }
 
     function ouvrirPanier() {
         document.getElementById('panier-modal').style.display = 'block';
-        const liste = document.getElementById('panier-liste');
         prixTotalArticles = 0;
-        liste.innerHTML = panier.map(item => {
+        document.getElementById('panier-liste').innerHTML = panier.map(item => {
             prixTotalArticles += item.prix;
-            return `<div class="article-panier"><span>${item.nom}</span> <b>${item.prix}$</b></div>`;
+            return `<div style="display:flex; justify-content:space-between; padding:5px 0;"><span>${item.nom}</span><b>${item.prix}$</b></div>`;
         }).join('');
         calculerTotal();
     }
 
     function calculerTotal() {
-        const frais = parseInt(document.getElementById('frais-livraison').value);
-        const total = prixTotalArticles + frais;
+        const frais = parseInt(document.getElementById('frais-livraison').value) || 0;
         document.getElementById('total-prix').innerText = prixTotalArticles;
-        document.getElementById('grand-total').innerText = "Total : " + total + " $";
+        document.getElementById('grand-total').innerText = "Total : " + (prixTotalArticles + frais) + " $";
     }
 
     function fermerPanier() { document.getElementById('panier-modal').style.display = 'none'; }
@@ -124,7 +115,7 @@
         const paiement = document.getElementById('moyen-paiement').value;
         const frais = document.getElementById('frais-livraison').value;
 
-        if(!nom || !tel) return alert("Complète tes infos DG !");
+        if(!nom || !tel) return alert("Veuillez remplir vos coordonnées DG !");
 
         const commande = {
             client: { nom, telephone: tel },
@@ -141,13 +132,12 @@
         });
 
         if(res.ok) {
-            alert("✅ Demande envoyée ! Le DG va confirmer ta commande d'ici peu.");
+            alert("✅ Demande envoyée ! Attends la confirmation du DG sur WhatsApp.");
             panier = [];
-            fermerPanier();
             document.getElementById('panier-count').innerText = "0";
+            fermerPanier();
         }
     }
-
     chargerBoutique();
 </script>
 </body>
