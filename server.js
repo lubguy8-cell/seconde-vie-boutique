@@ -1,95 +1,68 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer'); // Pour gérer l'envoi de fichiers
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static('.'));
+app.use('/uploads', express.static('uploads')); // Rend les photos accessibles
 
-// Fichiers de données (Nos mini bases de données)
-const DATA_FILE = 'produits.json';
-const ORDERS_FILE = 'commandes.json';
+// Configuration du stockage des images
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = './uploads';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
-// Initialisation des fichiers s'ils n'existent pas
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-if (!fs.existsSync(ORDERS_FILE)) fs.writeFileSync(ORDERS_FILE, JSON.stringify([]));
+const DB_PRODUITS = './produits.json';
+const DB_COMMANDES = './commandes.json';
 
-// --- GESTION DES PRODUITS ---
-
-// Lire les produits
+// --- ROUTES PRODUITS ---
 app.get('/api/produits', (req, res) => {
-    const data = JSON.parse(fs.readFileSync(DATA_FILE));
+    const data = JSON.parse(fs.readFileSync(DB_PRODUITS, 'utf8') || '[]');
     res.json(data);
 });
 
-// Ajouter ou Modifier un produit (incluant Stock et Fournisseur)
-app.post('/api/produits', (req, res) => {
-    const produits = JSON.parse(fs.readFileSync(DATA_FILE));
-    const nouveauProduit = {
+// Route modifiée pour accepter un FICHIER au lieu d'un LIEN
+app.post('/api/produits', upload.single('image'), (req, res) => {
+    const produits = JSON.parse(fs.readFileSync(DB_PRODUITS, 'utf8') || '[]');
+    const nouveau = {
         id: Date.now(),
         nom: req.body.nom,
-        prix: req.body.prix,
-        image: req.body.image,
-        fournisseur: req.body.fournisseur || "Interne",
-        stock: req.body.stock, // Nombre ou "infini"
-        description: req.body.description || ""
+        prix: parseFloat(req.body.prix),
+        image: `/uploads/${req.file.filename}`, // Chemin local vers l'image
+        fournisseur: req.body.fournisseur,
+        stock: req.body.stock
     };
-    produits.push(nouveauProduit);
-    fs.writeFileSync(DATA_FILE, JSON.stringify(produits, null, 2));
-    res.json({ message: "Article enregistré avec succès !" });
+    produits.push(nouveau);
+    fs.writeFileSync(DB_PRODUITS, JSON.stringify(produits, null, 2));
+    res.json(nouveau);
 });
 
-// Supprimer un produit
-app.delete('/api/produits/:id', (req, res) => {
-    let produits = JSON.parse(fs.readFileSync(DATA_FILE));
-    produits = produits.filter(p => p.id != req.params.id);
-    fs.writeFileSync(DATA_FILE, JSON.stringify(produits, null, 2));
-    res.json({ message: "Article supprimé." });
-});
-
-// --- GESTION DES COMMANDES (PANIER) ---
-
-// Envoyer une commande depuis la boutique vers l'espace DG
-app.post('/api/commandes', (req, res) => {
-    const commandes = JSON.parse(fs.readFileSync(ORDERS_FILE));
-    const nouvelleCommande = {
-        id: "CMD-" + Date.now(),
-        date: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Kinshasa' }),
-        client: req.body.client, // {nom, telephone, commune}
-        articles: req.body.articles, // Liste du panier
-        total: req.body.total,
-        paiement: req.body.paiement, // M-Pesa, Orange, Espèces
-        statut: "En attente", // En attente, Confirmée, Livrée
-        fraisLivraison: req.body.fraisLivraison || 0
-    };
-    commandes.push(nouvelleCommande);
-    fs.writeFileSync(ORDERS_FILE, JSON.stringify(commandes, null, 2));
-    res.json({ message: "Demande de commande reçue par le DG !", id: nouvelleCommande.id });
-});
-
-// Lire les commandes pour l'espace DG
+// --- ROUTES COMMANDES ---
 app.get('/api/commandes', (req, res) => {
-    const commandes = JSON.parse(fs.readFileSync(ORDERS_FILE));
-    res.json(commandes);
+    const data = JSON.parse(fs.readFileSync(DB_COMMANDES, 'utf8') || '[]');
+    res.json(data);
 });
 
-// Mettre à jour le statut (Confirmer la commande)
-app.patch('/api/commandes/:id', (req, res) => {
-    const commandes = JSON.parse(fs.readFileSync(ORDERS_FILE));
-    const index = commandes.findIndex(c => c.id == req.params.id);
-    if (index !== -1) {
-        commandes[index].statut = req.body.statut;
-        fs.writeFileSync(ORDERS_FILE, JSON.stringify(commandes, null, 2));
-        res.json({ message: "Statut mis à jour." });
-    }
+app.post('/api/commandes', (req, res) => {
+    const commandes = JSON.parse(fs.readFileSync(DB_COMMANDES, 'utf8') || '[]');
+    const nouvelle = { ...req.body, id: "CMD-" + Date.now(), date: new Date().toLocaleString(), statut: "En attente" };
+    commandes.push(nouvelle);
+    fs.writeFileSync(DB_COMMANDES, JSON.stringify(commandes, null, 2));
+    res.json(nouvelle);
 });
 
-app.listen(PORT, () => {
-    console.log(`
-    =============================================
-    BOUTIQUE SECONDE VIE : MODE PRO ACTIVÉE
-    Serveur : http://localhost:${PORT}
-    =============================================
-    `);
+app.listen(port, () => {
+    console.log(`------------------------------------------`);
+    console.log(`BOUTIQUE SECONDE VIE : MODE STOCKAGE LOCAL`);
+    console.log(`------------------------------------------`);
 });
