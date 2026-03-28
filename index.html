@@ -5,83 +5,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SECONDE VIE - Boutique Officielle</title>
     <style>
-        :root { --noir: #1a1a1a; --or: #D4AF37; --gris: #f4f4f4; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); }
+        :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #f9f9f9; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); }
+        header { background: var(--noir); color: var(--or); padding: 20px; text-align: center; border-bottom: 3px solid var(--or); position: sticky; top: 0; z-index: 100; }
         
-        /* En-tête Luxe */
-        .header { background: var(--noir); color: white; padding: 40px 20px; text-align: center; border-bottom: 4px solid var(--or); }
-        .header h1 { margin: 0; font-size: 2.5em; letter-spacing: 4px; color: var(--or); }
-        
-        /* Sélecteur de monnaie */
-        .monnaie-box { margin-top: 15px; background: #333; display: inline-block; padding: 8px 15px; border-radius: 20px; color: white; }
-        select { background: none; color: var(--or); border: none; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .panier-btn { position: fixed; right: 20px; top: 85px; background: var(--or); color: var(--noir); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-        /* Grille des produits */
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 40px 20px; max-width: 1200px; margin: auto; }
-        .carte { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.3s; position: relative; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 30px; }
+        .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.3s; }
         .carte:hover { transform: translateY(-5px); }
-        .carte img { width: 100%; height: 300px; object-fit: cover; }
-        .infos { padding: 15px; text-align: center; }
-        .infos h3 { margin: 10px 0; color: var(--noir); text-transform: uppercase; font-size: 1.1em; }
-        .prix { font-size: 1.3em; font-weight: bold; color: var(--noir); }
+        .carte img { width: 100%; height: 250px; object-fit: cover; }
+        .info { padding: 15px; text-align: center; }
+        .stock-info { font-size: 0.8em; color: #666; margin-bottom: 10px; }
+        .prix { font-size: 1.4em; color: var(--or); font-weight: bold; }
+        
+        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; }
 
-        /* Bouton Commander */
-        .btn-wa { display: block; background: #25D366; color: white; text-decoration: none; padding: 12px; font-weight: bold; text-align: center; margin-top: 10px; border-radius: 8px; transition: 0.3s; }
-        .btn-wa:hover { background: #1ebe57; }
+        /* Modal Panier */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 12px; }
+        .article-panier { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>SECONDE VIE</h1>
-        <p>L'Art du Design & de la Mode à Kinshasa</p>
-        <div class="monnaie-box">
-            Afficher les prix en : 
-            <select id="devise" onchange="chargerBoutique()">
-                <option value="$">Dollars ($)</option>
-                <option value="FC">Francs Congolais (FC)</option>
-            </select>
-        </div>
+<header>
+    <h1>SECONDE VIE</h1>
+    <p>L'Art du Portrait & La Mode de Seconde Main</p>
+</header>
+
+<div class="panier-btn" onclick="ouvrirPanier()">🛒 Panier (<span id="panier-count">0</span>)</div>
+
+<div class="container" id="boutique-liste">
     </div>
 
-    <div class="container" id="liste-produits">
-        </div>
+<div id="panier-modal" class="modal">
+    <div class="modal-content">
+        <h2>Ma Commande</h2>
+        <div id="panier-liste"></div>
+        <hr>
+        <p><b>Total Articles : <span id="total-prix">0</span> $</b></p>
+        
+        <h3>Infos Livraison & Paiement</h3>
+        <input type="text" id="client-nom" placeholder="Ton Nom Complet" style="width:95%; padding:10px; margin-bottom:10px;">
+        <input type="tel" id="client-tel" placeholder="N° WhatsApp (Ex: +243...)" style="width:95%; padding:10px; margin-bottom:10px;">
+        
+        <select id="moyen-paiement" style="width:100%; padding:10px; margin-bottom:10px;">
+            <option value="Orange Money">Orange Money</option>
+            <option value="M-Pesa">M-Pesa</option>
+            <option value="En espèces à la livraison">En espèces à la livraison</option>
+        </select>
 
-    <script>
-        const TAUX = 2850; // Taux actuel à Kinshasa (ajustable)
+        <select id="frais-livraison" onchange="calculerTotal()" style="width:100%; padding:10px; margin-bottom:10px;">
+            <option value="0">Livraison : À emporter (Gratuit)</option>
+            <option value="5">Gombe / Lingwala (5$)</option>
+            <option value="7">Limete / Ngaliema (7$)</option>
+            <option value="10">Autres communes (10$)</option>
+        </select>
+        
+        <p><i>Délai estimé : 24h à 48h selon l'article.</i></p>
+        <h2 id="grand-total" style="color:var(--or)">Total : 0 $</h2>
+        
+        <button class="btn-ajout" onclick="envoyerCommande()">VALIDER MA COMMANDE</button>
+        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; margin-top:10px;">Fermer</button>
+    </div>
+</div>
 
-        async function chargerBoutique() {
-            const reponse = await fetch('/api/produits');
-            const produits = await reponse.json();
-            const devise = document.getElementById('devise').value;
-            const container = document.getElementById('liste-produits');
-            
-            if(produits.length === 0) {
-                container.innerHTML = "<p style='grid-column: 1/-1; color: #666;'>Aucun article en stock pour le moment, DG.</p>";
-                return;
-            }
+<script>
+    let panier = [];
+    let prixTotalArticles = 0;
 
-            container.innerHTML = produits.map(p => {
-                const prixAffiche = devise === 'FC' ? (p.prix * TAUX).toLocaleString() : p.prix;
-                const messageWA = encodeURIComponent(`Bonjour SECONDE VIE, je souhaite commander l'article : ${p.nom} au prix de ${prixAffiche} ${devise}.`);
-                
-                return `
-                    <div class="carte">
-                        <img src="${p.image}">
-                        <div class="infos">
-                            <h3>${p.nom}</h3>
-                            <div class="prix">${prixAffiche} ${devise}</div>
-                            <a href="https://wa.me/243895373383?text=${messageWA}" target="_blank" class="btn-wa">
-                                COMMANDER SUR WHATSAPP
-                            </a>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+    async function chargerBoutique() {
+        const res = await fetch('/api/produits');
+        const produits = await res.json();
+        document.getElementById('boutique-liste').innerHTML = produits.map(p => `
+            <div class="carte">
+                <img src="${p.image}" alt="${p.nom}">
+                <div class="info">
+                    <div class="stock-info">${p.stock === 'infini' ? '✅ Disponible' : '🔥 Seulement ' + p.stock + ' restant(s)'}</div>
+                    <h3>${p.nom}</h3>
+                    <div class="prix">${p.prix} $</div>
+                    <p style="font-size:0.8em; color:grey">Vendeur: ${p.fournisseur}</p>
+                    <button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix})">AJOUTER AU PANIER</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function ajouterAuPanier(nom, prix) {
+        panier.push({nom, prix});
+        document.getElementById('panier-count').innerText = panier.length;
+        alert(nom + " ajouté au panier !");
+    }
+
+    function ouvrirPanier() {
+        document.getElementById('panier-modal').style.display = 'block';
+        const liste = document.getElementById('panier-liste');
+        prixTotalArticles = 0;
+        liste.innerHTML = panier.map(item => {
+            prixTotalArticles += item.prix;
+            return `<div class="article-panier"><span>${item.nom}</span> <b>${item.prix}$</b></div>`;
+        }).join('');
+        calculerTotal();
+    }
+
+    function calculerTotal() {
+        const frais = parseInt(document.getElementById('frais-livraison').value);
+        const total = prixTotalArticles + frais;
+        document.getElementById('total-prix').innerText = prixTotalArticles;
+        document.getElementById('grand-total').innerText = "Total : " + total + " $";
+    }
+
+    function fermerPanier() { document.getElementById('panier-modal').style.display = 'none'; }
+
+    async function envoyerCommande() {
+        const nom = document.getElementById('client-nom').value;
+        const tel = document.getElementById('client-tel').value;
+        const paiement = document.getElementById('moyen-paiement').value;
+        const frais = document.getElementById('frais-livraison').value;
+
+        if(!nom || !tel) return alert("Complète tes infos DG !");
+
+        const commande = {
+            client: { nom, telephone: tel },
+            articles: panier,
+            total: prixTotalArticles + parseInt(frais),
+            paiement: paiement,
+            fraisLivraison: frais
+        };
+
+        const res = await fetch('/api/commandes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(commande)
+        });
+
+        if(res.ok) {
+            alert("✅ Demande envoyée ! Le DG va confirmer ta commande d'ici peu.");
+            panier = [];
+            fermerPanier();
+            document.getElementById('panier-count').innerText = "0";
         }
+    }
 
-        // Lancer le chargement au démarrage
-        chargerBoutique();
-    </script>
+    chargerBoutique();
+</script>
 </body>
 </html>

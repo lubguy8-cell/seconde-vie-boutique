@@ -2,66 +2,192 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>DG - GESTION SECONDE VIE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DG SECONDE VIE - Tableau de Bord</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 30px; background: #f0f0f0; }
-        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; font-size: 1.5em; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #1a1a1a; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #444; }
-        #aperçu { width: 100%; margin-top: 10px; border-radius: 5px; display: none; }
+        :root { --noir: #1a1a1a; --or: #D4AF37; --gris: #f4f4f4; --vert: #25D366; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); display: flex; }
+        
+        /* Menu Latéral */
+        .sidebar { width: 250px; background: var(--noir); color: white; height: 100vh; position: fixed; padding: 20px; }
+        .sidebar h2 { color: var(--or); font-size: 1.2em; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; }
+        .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; }
+
+        /* Zone de contenu */
+        .main { margin-left: 290px; padding: 30px; width: calc(100% - 320px); }
+        .section { display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .section.active-sec { display: block; }
+
+        /* Formulaires et Tableaux */
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
+        button { background: var(--noir); color: var(--or); border: 2px solid var(--or); padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 6px; }
+        button:hover { background: var(--or); color: var(--noir); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
+        .badge-attente { background: #fff3cd; color: #856404; }
+        .badge-confirme { background: #d4edda; color: #155724; }
+
+        .btn-wa { background: var(--vert); color: white; border: none; padding: 5px 10px; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h1>ESPACE DG - AJOUT</h1>
-        
-        <input type="text" id="nom" placeholder="Nom de l'article (ex: Veste Vintage)">
-        <input type="number" id="prix" placeholder="Prix en Dollars ($)">
-        
-        <label style="display:block; margin-top:15px; font-size: 0.9em; color: #666;">Photo de l'article :</label>
-        <input type="file" id="photo" accept="image/*" onchange="voirPhoto()">
-        <img id="aperçu">
+    <div class="sidebar">
+        <h2>SECONDE VIE - DG</h2>
+        <div class="menu-item active" onclick="ouvrirSection('articles', this)">📦 Articles & Stocks</div>
+        <div class="menu-item" onclick="ouvrirSection('commandes', this)">📋 Commandes Reçues</div>
+        <div class="menu-item" onclick="ouvrirSection('vendeurs', this)">🤝 Fournisseurs</div>
+    </div>
 
-        <button onclick="publier()">PUBLIER SUR LA BOUTIQUE</button>
+    <div class="main">
+        <div id="articles" class="section active-sec">
+            <h1>Gestion de la Boutique</h1>
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                <h3>Ajouter un nouvel article</h3>
+                <input type="text" id="nom" placeholder="Nom de l'article">
+                <input type="number" id="prix" placeholder="Prix en Dollars ($)">
+                <input type="text" id="image" placeholder="Lien de l'image (URL)">
+                <input type="text" id="fournisseur" placeholder="Nom du Fournisseur">
+                <select id="stock">
+                    <option value="infini">Stock Infini (Services/Portraits)</option>
+                    <option value="1">1 exemplaire (Pièce unique)</option>
+                    <option value="5">5 exemplaires</option>
+                    <option value="10">10 exemplaires</option>
+                </select>
+                <button onclick="ajouterArticle()">PUBLIER L'ARTICLE</button>
+            </div>
+
+            <table id="table-articles">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Nom</th>
+                        <th>Prix</th>
+                        <th>Stock</th>
+                        <th>Fournisseur</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="liste-articles-corps"></tbody>
+            </table>
+        </div>
+
+        <div id="commandes" class="section">
+            <h1>Commandes à Valider</h1>
+            <p>Ici s'affichent les demandes clients. Confirmez pour envoyer la facture.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Articles</th>
+                        <th>Total</th>
+                        <th>Paiement</th>
+                        <th>Statut</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="liste-commandes-corps"></tbody>
+            </table>
+        </div>
+
+        <div id="vendeurs" class="section">
+            <h1>Mes Fournisseurs / Partenaires</h1>
+            <p>Liste des vendeurs inscrits sur la plateforme SECONDE VIE.</p>
+            <div id="liste-fournisseurs">
+                <p>Gestion des commissions et contacts vendeurs à venir.</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        let imageBase64 = "";
-
-        // Fonction pour transformer la photo en texte pour le serveur
-        function voirPhoto() {
-            const fichier = document.getElementById('photo').files[0];
-            const reader = new FileReader();
-            const imgElement = document.getElementById('aperçu');
-
-            reader.onloadend = function() {
-                imageBase64 = reader.result;
-                imgElement.src = imageBase64;
-                imgElement.style.display = "block";
-            }
-            if (fichier) { reader.readAsDataURL(fichier); }
+        // NAVIGATION
+        function ouvrirSection(id, element) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.getElementById(id).classList.add('active-sec');
+            element.classList.add('active');
+            if(id === 'articles') chargerArticles();
+            if(id === 'commandes') chargerCommandes();
         }
 
-        async function publier() {
-            const nom = document.getElementById('nom').value;
-            const prix = document.getElementById('prix').value;
-
-            if(!nom || !prix || !imageBase64) return alert("DG, remplissez tout !");
-
-            const reponse = await fetch('/api/produits', {
+        // ARTICLES
+        async function ajouterArticle() {
+            const article = {
+                nom: document.getElementById('nom').value,
+                prix: document.getElementById('prix').value,
+                image: document.getElementById('image').value,
+                fournisseur: document.getElementById('fournisseur').value,
+                stock: document.getElementById('stock').value
+            };
+            await fetch('/api/produits', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ nom, prix, image: imageBase64 })
+                body: JSON.stringify(article)
             });
+            alert("Article ajouté au catalogue !");
+            chargerArticles();
+        }
 
-            if(reponse.ok) {
-                alert("Article publié avec succès !");
-                location.reload();
+        async function chargerArticles() {
+            const res = await fetch('/api/produits');
+            const data = await res.json();
+            document.getElementById('liste-articles-corps').innerHTML = data.map(p => `
+                <tr>
+                    <td><img src="${p.image}" width="50"></td>
+                    <td>${p.nom}</td>
+                    <td>${p.prix}$</td>
+                    <td>${p.stock}</td>
+                    <td>${p.fournisseur}</td>
+                    <td><button onclick="supprimerArticle(${p.id})" style="border-color:red; color:red;">Supprimer</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function supprimerArticle(id) {
+            if(confirm("Supprimer cet article ?")) {
+                await fetch(`/api/produits/${id}`, { method: 'DELETE' });
+                chargerArticles();
             }
         }
+
+        // COMMANDES
+        async function chargerCommandes() {
+            const res = await fetch('/api/commandes');
+            const data = await res.json();
+            document.getElementById('liste-commandes-corps').innerHTML = data.map(c => `
+                <tr>
+                    <td>${c.date}</td>
+                    <td>${c.client.nom}<br>${c.client.telephone}</td>
+                    <td>${c.articles.map(a => a.nom).join(', ')}</td>
+                    <td><b>${c.total}$</b></td>
+                    <td>${c.paiement}</td>
+                    <td><span class="badge ${c.statut === 'En attente' ? 'badge-attente' : 'badge-confirme'}">${c.statut}</span></td>
+                    <td>
+                        <button class="btn-wa" onclick="confirmerCommande('${c.id}', '${c.client.telephone}', '${c.total}')">CONFIRMER & FACTURER</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function confirmerCommande(id, tel, total) {
+            // Ici on prépare le message WhatsApp pro
+            const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nCommande : ${id}\nMontant : ${total}$\nStatut : CONFIRMÉE ✅\n\nVeuillez procéder au paiement par M-Pesa/Orange Money pour valider la livraison.`);
+            window.open(`https://wa.me/${tel}?text=${msg}`);
+            
+            // On met à jour le statut sur le serveur
+            fetch(`/api/commandes/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({statut: "Confirmée"})
+            }).then(() => chargerCommandes());
+        }
+
+        // Charger au démarrage
+        chargerArticles();
     </script>
 </body>
 </html>
