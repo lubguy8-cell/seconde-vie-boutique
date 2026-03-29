@@ -7,141 +7,233 @@
     <style>
         :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #2a2a2a; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--noir); color: var(--blanc); display: flex; }
-        
-        /* Sidebar Luxe */
-        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; padding: 20px; border-right: 2px solid var(--or); }
-        .sidebar h2 { color: var(--or); text-align: center; border-bottom: 2px solid var(--or); padding-bottom: 15px; letter-spacing: 2px; }
-        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; border: 1px solid transparent; }
-        .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
-        
-        /* Main Content */
+        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; padding: 20px; border-right: 2px solid var(--or); overflow-y: auto;}
+        .sidebar h2 { color: var(--or); text-align: center; border-bottom: 2px solid var(--or); padding-bottom: 15px; }
+        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; transition: 0.3s; }
+        .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; }
         .main { margin-left: 300px; padding: 30px; width: calc(100% - 340px); }
         .section { display: none; background: var(--gris); padding: 25px; border-radius: 15px; border: 1px solid #444; }
-        .active-sec { display: block; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Formulaire Style DG */
-        .form-box { background: #111; padding: 25px; border-radius: 12px; border: 1px solid var(--or); margin-bottom: 30px; }
-        input, select { background: #222; color: white; border: 1px solid #444; padding: 12px; margin: 8px 0; border-radius: 6px; width: 100%; box-sizing: border-box; }
-        input:focus { border-color: var(--or); outline: none; }
-        
-        /* Bouton Publier Or */
-        .btn-publier { background: var(--or); color: var(--noir); border: none; padding: 15px 30px; cursor: pointer; font-weight: bold; border-radius: 8px; width: 100%; font-size: 1.1em; transition: 0.3s; margin-top: 10px; }
-        .btn-publier:hover { background: #b8962d; transform: scale(1.02); }
-
-        /* Tableaux */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111; }
-        th { background: var(--or); color: var(--noir); padding: 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #333; }
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
-        .badge-attente { background: #554400; color: var(--or); border: 1px solid var(--or); }
+        .active-sec { display: block; }
+        .form-box { background: #111; padding: 20px; border-radius: 12px; border: 1px solid var(--or); margin-bottom: 20px; }
+        input, select { background: #222; color: white; border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        input:focus, select:focus { border-color: var(--or); outline: none; }
+        .btn-or { background: var(--or); color: var(--noir); border: none; padding: 12px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; width: 100%; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111; font-size: 0.9em; }
+        th { background: var(--or); color: var(--noir); padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #333; }
+        .badge-attente { background: #554400; color: var(--or); padding: 5px 10px; border-radius: 10px; font-size: 0.8em; }
+        .badge-valide { background: #004d00; color: #00ff00; padding: 5px 10px; border-radius: 10px; font-size: 0.8em; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>SECONDE VIE</h2>
-    <div class="menu-item active" onclick="ouvrirSection('articles', this)">📦 Gérer Boutique</div>
-    <div class="menu-item" onclick="ouvrirSection('commandes', this)">📋 Commandes Reçues</div>
+    <h2>Espace DG</h2>
+    <div class="menu-item active" onclick="ouvrirSection('cmd-attente', this)">📋 Commandes à Valider</div>
+    <div class="menu-item" onclick="ouvrirSection('cmd-historique', this)">📜 Historique Commandes</div>
+    <div class="menu-item" onclick="ouvrirSection('stock', this)">📦 Gestion de Stock</div>
+    <div class="menu-item" onclick="ouvrirSection('fournisseurs', this)">🤝 Fournisseurs</div>
 </div>
 
 <div class="main">
-    <div id="articles" class="section active-sec">
-        <h1 style="color:var(--or)">Ajouter un Chef-d'œuvre</h1>
-        <div class="form-box">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <input type="text" id="nom" placeholder="Nom de l'article">
-                <input type="number" id="prix" placeholder="Prix en Dollar ($)">
+    <div id="cmd-attente" class="section active-sec">
+        <h1 style="color:var(--or)">Commandes à Valider</h1>
+        <div id="validation-box" class="form-box" style="display:none; background:#222;">
+            <h3 style="color:var(--or); margin-top:0;">Facturation pour <span id="val-client-nom"></span></h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input type="number" id="val-frais" placeholder="Frais de livraison (ex: 5$)">
+                <input type="text" id="val-duree" placeholder="Durée estimée (ex: 24h, 2 jours)">
             </div>
-            
-            <label style="display:block; margin-top:15px; color:var(--or); font-weight:bold;">📷 Sélectionner la photo dans ta galerie :</label>
-            <input type="file" id="fichier-image" accept="image/*" style="border: 1px dashed var(--or); padding: 20px;">
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <input type="text" id="fours" placeholder="Nom du Fournisseur">
-                <select id="stk">
-                    <option value="infini">Stock Infini (Portraits)</option>
-                    <option value="1">1 pièce unique (Mode)</option>
-                    <option value="5">Série limitée (5 pièces)</option>
-                </select>
-            </div>
-            <button class="btn-publier" onclick="ajouter()">🚀 PUBLIER SUR LA BOUTIQUE</button>
+            <button class="btn-or" onclick="confirmerValidation()" style="background:#25D366; color:white;">Valider & Envoyer WhatsApp</button>
+            <button class="btn-or" onclick="document.getElementById('validation-box').style.display='none'" style="background:red; color:white;">Annuler</button>
         </div>
-
-        <table id="table-art">
-            <thead><tr><th>Aperçu</th><th>Produit</th><th>Prix</th><th>Stock</th><th>Action</th></tr></thead>
-            <tbody id="corps-art"></tbody>
+        <table>
+            <thead><tr><th>Date</th><th>Client & Adresse</th><th>Articles</th><th>Paiement</th><th>Action</th></tr></thead>
+            <tbody id="corps-cmd-attente"></tbody>
         </table>
     </div>
 
-    <div id="commandes" class="section">
-        <h1 style="color:var(--or)">Suivi des Ventes</h1>
-        <table id="table-cmd">
-            <thead><tr><th>Date</th><th>Client</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Action</th></tr></thead>
-            <tbody id="corps-cmd"></tbody>
+    <div id="cmd-historique" class="section">
+        <h1 style="color:var(--or)">Historique des Ventes</h1>
+        <table>
+            <thead><tr><th>Date</th><th>Client</th><th>Frais & Durée</th><th>Paiement</th><th>Statut</th></tr></thead>
+            <tbody id="corps-cmd-histo"></tbody>
         </table>
+    </div>
+
+    <div id="stock" class="section">
+        <h1 style="color:var(--or)">Gestion de Stock</h1>
+        <div class="form-box">
+            <h3 id="form-titre" style="margin-top:0;">Ajouter un Produit</h3>
+            <input type="hidden" id="edit-id">
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+                <input type="text" id="nom" placeholder="Nom de l'article">
+                <input type="number" id="prix" placeholder="Prix">
+                <select id="devise">
+                    <option value="$">Dollar ($)</option>
+                    <option value="FC">Franc Congolais (FC)</option>
+                </select>
+            </div>
+            <label style="color:var(--or); font-size:0.9em;">Image (Optionnel si modification) :</label>
+            <input type="file" id="image" accept="image/*">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="text" id="stock-qte" placeholder="Quantité (ex: 10 ou 'infini')">
+                <input type="text" id="fournisseur" placeholder="Nom du Fournisseur">
+            </div>
+            <button id="btn-save" class="btn-or" onclick="sauvegarderProduit()">Ajouter au Stock</button>
+        </div>
+        <table>
+            <thead><tr><th>Image</th><th>Produit</th><th>Prix</th><th>Stock Restant</th><th>Fournisseur</th><th>Actions</th></tr></thead>
+            <tbody id="corps-stock"></tbody>
+        </table>
+    </div>
+
+    <div id="fournisseurs" class="section">
+        <h1 style="color:var(--or)">Liste des Fournisseurs</h1>
+        <p><i>Voici la liste de vos fournisseurs extraite de votre stock actuel :</i></p>
+        <ul id="liste-fournisseurs" style="line-height:2;"></ul>
     </div>
 </div>
 
 <script>
+    let commandeEnCours = null;
+
     function ouvrirSection(id, el) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         document.getElementById(id).classList.add('active-sec');
         el.classList.add('active');
-        if(id === 'articles') chargerArticles();
-        if(id === 'commandes') chargerCommandes();
     }
 
-    async function ajouter() {
-        const inputImage = document.getElementById('fichier-image');
-        if (inputImage.files.length === 0) return alert("DG, n'oublie pas de choisir la photo !");
+    // --- GESTION DES PRODUITS ---
+    async function chargerStock() {
+        const res = await fetch('/api/produits');
+        const data = await res.json();
+        
+        // Affichage du stock
+        document.getElementById('corps-stock').innerHTML = data.map(p => {
+            let etatStock = p.stock === 'infini' ? '<span style="color:green">Abondance</span>' : (p.stock > 0 ? `<span style="color:orange">${p.stock} restants</span>` : '<span style="color:red">Rupture</span>');
+            return `<tr>
+                <td><img src="${p.image}" style="width:40px;height:40px;border-radius:5px;"></td>
+                <td>${p.nom}</td>
+                <td><b>${p.prix} ${p.devise}</b></td>
+                <td>${etatStock}</td>
+                <td>${p.fournisseur}</td>
+                <td>
+                    <button onclick="editerProduit('${p.id}', '${p.nom}', '${p.prix}', '${p.devise}', '${p.stock}', '${p.fournisseur}')" style="background:blue; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">Modifier</button>
+                    <button onclick="supprimerProduit('${p.id}')" style="background:red; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">X</button>
+                </td>
+            </tr>`;
+        }).join('');
 
+        // Mise à jour fournisseurs
+        const fournisseurs = [...new Set(data.map(p => p.fournisseur).filter(f => f))];
+        document.getElementById('liste-fournisseurs').innerHTML = fournisseurs.map(f => `<li><b>${f}</b></li>`).join('');
+    }
+
+    async function sauvegarderProduit() {
+        const id = document.getElementById('edit-id').value;
         const formData = new FormData();
         formData.append('nom', document.getElementById('nom').value);
         formData.append('prix', document.getElementById('prix').value);
-        formData.append('image', inputImage.files[0]);
-        formData.append('fournisseur', document.getElementById('fours').value);
-        formData.append('stock', document.getElementById('stk').value);
+        formData.append('devise', document.getElementById('devise').value);
+        formData.append('stock', document.getElementById('stock-qte').value);
+        formData.append('fournisseur', document.getElementById('fournisseur').value);
+        
+        const fileInput = document.getElementById('image');
+        if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
 
-        const res = await fetch('/api/produits', { method: 'POST', body: formData });
-        if(res.ok) {
-            alert("✅ Article ajouté avec succès !");
-            chargerArticles();
+        const url = id ? `/api/produits/${id}` : '/api/produits';
+        const method = id ? 'PUT' : 'POST';
+
+        await fetch(url, { method: method, body: formData });
+        
+        // Reset form
+        document.getElementById('edit-id').value = '';
+        document.getElementById('nom').value = ''; document.getElementById('prix').value = '';
+        document.getElementById('stock-qte').value = ''; document.getElementById('fournisseur').value = '';
+        fileInput.value = '';
+        document.getElementById('form-titre').innerText = "Ajouter un Produit";
+        document.getElementById('btn-save').innerText = "Ajouter au Stock";
+        chargerStock();
+    }
+
+    function editerProduit(id, nom, prix, devise, stock, fournisseur) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('nom').value = nom;
+        document.getElementById('prix').value = prix;
+        document.getElementById('devise').value = devise;
+        document.getElementById('stock-qte').value = stock;
+        document.getElementById('fournisseur').value = fournisseur;
+        document.getElementById('form-titre').innerText = "Modifier le Produit";
+        document.getElementById('btn-save').innerText = "Enregistrer les modifications";
+        window.scrollTo(0, 0);
+    }
+
+    async function supprimerProduit(id) {
+        if(confirm("Supprimer cet article ?")) {
+            await fetch(`/api/produits/${id}`, { method: 'DELETE' });
+            chargerStock();
         }
     }
 
-    async function chargerArticles() {
-        const res = await fetch('/api/produits');
-        const data = await res.json();
-        document.getElementById('corps-art').innerHTML = data.map(p => `
-            <tr>
-                <td><img src="${p.image}" style="width:50px; height:50px; border-radius:5px; border:1px solid var(--or)"></td>
-                <td>${p.nom}</td>
-                <td style="color:var(--or); font-weight:bold">${p.prix} $</td>
-                <td>${p.stock}</td>
-                <td><button onclick="suppr(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">✖</button></td>
-            </tr>
-        `).join('');
-    }
-
+    // --- GESTION DES COMMANDES ---
     async function chargerCommandes() {
         const res = await fetch('/api/commandes');
         const data = await res.json();
-        document.getElementById('corps-cmd').innerHTML = data.map(c => `
+        
+        const attente = data.filter(c => c.statut === "En attente");
+        const validees = data.filter(c => c.statut === "Validée");
+
+        document.getElementById('corps-cmd-attente').innerHTML = attente.map(c => `
             <tr>
                 <td>${c.date}</td>
-                <td>${c.client.nom}<br><small>${c.client.telephone}</small></td>
-                <td style="color:var(--or)">${c.total} $</td>
-                <td><b>${c.paiement}</b></td>
-                <td><span class="badge badge-attente">${c.statut}</span></td>
-                <td><button onclick="valider('${c.id}','${c.client.telephone}','${c.total}')" style="background:#25D366; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">WhatsApp</button></td>
+                <td><b>${c.client.nom}</b><br>📞 ${c.client.telephone}<br>📍 ${c.client.adresse}</td>
+                <td>${c.articles.map(a => a.nom).join(', ')}</td>
+                <td>${c.paiement}</td>
+                <td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px;">Valider & Facturer</button></td>
+            </tr>
+        `).join('');
+
+        document.getElementById('corps-cmd-histo').innerHTML = validees.map(c => `
+            <tr>
+                <td>${c.date}</td>
+                <td>${c.client.nom}</td>
+                <td>Livraison: ${c.fraisLivraison} | Délai: ${c.dureeLivraison}</td>
+                <td>${c.paiement}</td>
+                <td><span class="badge-valide">Validée ✅</span></td>
             </tr>
         `).join('');
     }
 
+    function preparerValidation(id, nom, tel) {
+        commandeEnCours = { id, nom, tel };
+        document.getElementById('val-client-nom').innerText = nom;
+        document.getElementById('validation-box').style.display = 'block';
+    }
+
+    async function confirmerValidation() {
+        const frais = document.getElementById('val-frais').value;
+        const duree = document.getElementById('val-duree').value;
+        if(!frais || !duree) return alert("Veuillez remplir les frais et la durée !");
+
+        // Message WhatsApp
+        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nBonjour ${commandeEnCours.nom},\nVotre commande a été validée par la Direction ! ✅\n\nFrais de livraison : ${frais}\nDurée de livraison estimée : ${duree}\n\nMerci pour votre confiance. Le DG.`);
+        window.open(`https://wa.me/${commandeEnCours.tel}?text=${msg}`);
+
+        // Mise à jour BDD
+        await fetch(`/api/commandes/${commandeEnCours.id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fraisLivraison: frais, dureeLivraison: duree })
+        });
+
+        document.getElementById('validation-box').style.display = 'none';
+        chargerCommandes();
+    }
+
     setInterval(chargerCommandes, 30000);
-    window.onload = () => { chargerArticles(); chargerCommandes(); };
+    window.onload = () => { chargerStock(); chargerCommandes(); };
 </script>
 </body>
 </html>
