@@ -6,105 +6,105 @@
     <title>SECONDE VIE - Boutique Officielle</title>
     <style>
         :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #f9f9f9; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); }
-        header { background: var(--noir); color: var(--or); padding: 20px; text-align: center; border-bottom: 3px solid var(--or); position: sticky; top: 0; z-index: 100; }
-        .panier-btn { position: fixed; right: 20px; top: 85px; background: var(--or); color: var(--noir); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 99; }
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 30px; }
-        .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); padding-top: 80px; }
+        header { background: var(--noir); color: var(--or); padding: 15px; text-align: center; border-bottom: 3px solid var(--or); position: fixed; top: 0; width: 100%; z-index: 100; display: flex; justify-content: space-around; align-items: center; }
+        .header-btn { background: var(--or); color: var(--noir); padding: 8px 15px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.9em; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
+        .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .carte img { width: 100%; height: 250px; object-fit: cover; }
         .info { padding: 15px; text-align: center; }
         .prix { font-size: 1.4em; color: var(--or); font-weight: bold; margin: 10px 0; }
-        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; }
+        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; margin-top:10px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); overflow-y: auto; }
         .modal-content { background: white; margin: 5% auto; padding: 25px; width: 90%; max-width: 450px; border-radius: 12px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .stock-badge { font-size: 0.85em; font-weight: bold; padding: 5px; border-radius: 5px; display: inline-block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>SECONDE VIE</h1>
-    <p>L'Art du Portrait & La Mode de Seconde Main</p>
+    <div>
+        <h2 style="margin:0;">SECONDE VIE</h2>
+    </div>
+    <div>
+        <a href="https://wa.me/243893818689" class="header-btn" target="_blank">💬 Service Client</a>
+        <span class="header-btn" style="cursor:pointer; margin-left:10px;" onclick="ouvrirPanier()">🛒 Panier (<span id="panier-count">0</span>)</span>
+    </div>
 </header>
-
-<div class="panier-btn" onclick="ouvrirPanier()">🛒 Panier (<span id="panier-count">0</span>)</div>
 
 <div class="container" id="boutique-liste">
     </div>
 
 <div id="panier-modal" class="modal">
     <div class="modal-content">
-        <h2 style="border-bottom: 2px solid var(--or); padding-bottom: 10px;">Ma Commande</h2>
+        <h2 style="border-bottom: 2px solid var(--or); padding-bottom: 10px;">Mon Panier</h2>
         <div id="panier-liste"></div>
-        <p><b>Total Articles : <span id="total-prix">0</span> $</b></p>
         
         <hr>
-        <h4>Tes Informations</h4>
+        <h4>Mes Coordonnées</h4>
         <input type="text" id="client-nom" placeholder="Nom Complet">
         <input type="tel" id="client-tel" placeholder="N° WhatsApp (Ex: +243...)">
+        <textarea id="client-adresse" rows="3" placeholder="Adresse complète de livraison (Commune, Quartier, Avenue, N°)"></textarea>
         
-        <h4>Paiement & Livraison</h4>
+        <h4>Paiement</h4>
         <select id="moyen-paiement">
             <option value="Orange Money">🟠 Orange Money</option>
             <option value="M-Pesa">🔴 M-Pesa</option>
             <option value="En espèces à la livraison">💵 En espèces à la livraison</option>
         </select>
-
-        <select id="frais-livraison" onchange="calculerTotal()">
-            <option value="0">Retrait à l'agence (Gratuit)</option>
-            <option value="5">Gombe / Lingwala (5$)</option>
-            <option value="7">Limete / Ngaliema (7$)</option>
-            <option value="10">Autres communes (10$)</option>
-        </select>
-        
-        <p style="font-size: 0.8em; color: gray;">Délai de livraison : 24h - 48h</p>
-        <h2 id="grand-total" style="color:var(--or)">Total : 0 $</h2>
         
         <button class="btn-ajout" onclick="envoyerCommande()">VALIDER LA COMMANDE</button>
-        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:10px;">Annuler</button>
+        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:15px;">Fermer</button>
     </div>
 </div>
 
 <script>
     let panier = [];
-    let prixTotalArticles = 0;
 
     async function chargerBoutique() {
         const res = await fetch('/api/produits');
         const produits = await res.json();
-        document.getElementById('boutique-liste').innerHTML = produits.map(p => `
+        
+        document.getElementById('boutique-liste').innerHTML = produits.map(p => {
+            let etatStock = '';
+            let btnActif = true;
+            
+            if (p.stock === 'infini' || p.stock > 10) {
+                etatStock = '<span class="stock-badge" style="background:#d4edda; color:#155724;">✅ Stock en abondance</span>';
+            } else if (p.stock > 0) {
+                etatStock = `<span class="stock-badge" style="background:#fff3cd; color:#856404;">⚠️ Presque en rupture (${p.stock} restants)</span>`;
+            } else {
+                etatStock = '<span class="stock-badge" style="background:#f8d7da; color:#721c24;">❌ Rupture de stock</span>';
+                btnActif = false;
+            }
+
+            return `
             <div class="carte">
-                <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Indisponible'">
+                <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400x300?text=Image'">
                 <div class="info">
-                    <div style="font-size:0.7em; color:gray">${p.stock === 'infini' ? '✅ DISPONIBLE' : '🔥 PLUS QUE ' + p.stock}</div>
+                    ${etatStock}
                     <h3>${p.nom}</h3>
-                    <div class="prix">${p.prix} $</div>
-                    <button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix})">AJOUTER AU PANIER</button>
+                    <div class="prix">${p.prix} ${p.devise}</div>
+                    ${btnActif ? `<button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix}, '${p.devise}')">AJOUTER AU PANIER</button>` : `<button class="btn-ajout" style="background:gray; border:none; cursor:not-allowed;">ÉPUISÉ</button>`}
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     }
 
-    function ajouterAuPanier(nom, prix) {
-        panier.push({nom, prix});
+    function ajouterAuPanier(nom, prix, devise) {
+        panier.push({nom, prix, devise});
         document.getElementById('panier-count').innerText = panier.length;
-        alert("Ajouté !");
+        alert("Ajouté au panier !");
     }
 
     function ouvrirPanier() {
         document.getElementById('panier-modal').style.display = 'block';
-        prixTotalArticles = 0;
-        document.getElementById('panier-liste').innerHTML = panier.map(item => {
-            prixTotalArticles += item.prix;
-            return `<div style="display:flex; justify-content:space-between; padding:5px 0;"><span>${item.nom}</span><b>${item.prix}$</b></div>`;
-        }).join('');
-        calculerTotal();
-    }
-
-    function calculerTotal() {
-        const frais = parseInt(document.getElementById('frais-livraison').value) || 0;
-        document.getElementById('total-prix').innerText = prixTotalArticles;
-        document.getElementById('grand-total').innerText = "Total : " + (prixTotalArticles + frais) + " $";
+        document.getElementById('panier-liste').innerHTML = panier.map(item => `
+            <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
+                <span>${item.nom}</span><b>${item.prix} ${item.devise}</b>
+            </div>
+        `).join('');
     }
 
     function fermerPanier() { document.getElementById('panier-modal').style.display = 'none'; }
@@ -112,17 +112,15 @@
     async function envoyerCommande() {
         const nom = document.getElementById('client-nom').value;
         const tel = document.getElementById('client-tel').value;
+        const adresse = document.getElementById('client-adresse').value;
         const paiement = document.getElementById('moyen-paiement').value;
-        const frais = document.getElementById('frais-livraison').value;
 
-        if(!nom || !tel) return alert("Veuillez remplir vos coordonnées DG !");
+        if(!nom || !tel || !adresse) return alert("Veuillez remplir votre nom, WhatsApp et adresse complète !");
 
         const commande = {
-            client: { nom, telephone: tel },
+            client: { nom, telephone: tel, adresse },
             articles: panier,
-            total: prixTotalArticles + parseInt(frais),
-            paiement: paiement,
-            fraisLivraison: frais
+            paiement: paiement
         };
 
         const res = await fetch('/api/commandes', {
@@ -132,7 +130,7 @@
         });
 
         if(res.ok) {
-            alert("✅ Demande envoyée ! Attends la confirmation du DG sur WhatsApp.");
+            alert("✅ Commande envoyée au DG ! Vous serez contacté sur WhatsApp.");
             panier = [];
             document.getElementById('panier-count').innerText = "0";
             fermerPanier();
