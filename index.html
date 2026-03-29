@@ -6,30 +6,37 @@
     <title>SECONDE VIE - Boutique Officielle</title>
     <style>
         :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #f9f9f9; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); padding-top: 80px; }
-        header { background: var(--noir); color: var(--or); padding: 15px; text-align: center; border-bottom: 3px solid var(--or); position: fixed; top: 0; width: 100%; z-index: 100; display: flex; justify-content: space-around; align-items: center; }
-        .header-btn { background: var(--or); color: var(--noir); padding: 8px 15px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.9em; }
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px; }
-        .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .carte img { width: 100%; height: 250px; object-fit: cover; }
-        .info { padding: 15px; text-align: center; }
-        .prix { font-size: 1.4em; color: var(--or); font-weight: bold; margin: 10px 0; }
-        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; margin-top:10px; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); padding-top: 130px; }
+        
+        /* HEADER RESPONSIVE */
+        header { background: var(--noir); color: var(--or); padding: 15px; text-align: center; border-bottom: 3px solid var(--or); position: fixed; top: 0; width: 100%; z-index: 100; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
+        .header-actions { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .header-btn { background: var(--or); color: var(--noir); padding: 10px 20px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 0.9em; cursor: pointer; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        
+        /* GRILLE DE PRODUITS ADAPTATIVE */
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 15px; }
+        @media (min-width: 600px) { .container { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); padding: 25px; } }
+        
+        .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .carte img { width: 100%; height: 200px; object-fit: cover; }
+        .info { padding: 12px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .prix { font-size: 1.2em; color: var(--or); font-weight: bold; margin: 10px 0; }
+        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; margin-top: 5px; }
+        
+        /* PANIER MODAL */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); overflow-y: auto; }
-        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 90%; max-width: 450px; border-radius: 12px; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .stock-badge { font-size: 0.85em; font-weight: bold; padding: 5px; border-radius: 5px; display: inline-block; margin-bottom: 5px; }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 450px; border-radius: 12px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        .stock-badge { font-size: 0.75em; font-weight: bold; padding: 5px; border-radius: 5px; display: inline-block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div>
-        <h2 style="margin:0;">SECONDE VIE</h2>
-    </div>
-    <div>
+    <h2 style="margin:0; font-size: 1.5em; letter-spacing: 1px;">SECONDE VIE</h2>
+    <div class="header-actions">
         <a href="https://wa.me/243893818689" class="header-btn" target="_blank">💬 Service Client</a>
-        <span class="header-btn" style="cursor:pointer; margin-left:10px;" onclick="ouvrirPanier()">🛒 Panier (<span id="panier-count">0</span>)</span>
+        <button class="header-btn" onclick="ouvrirPanier()">🛒 Panier (<span id="panier-count">0</span>)</button>
     </div>
 </header>
 
@@ -38,24 +45,24 @@
 
 <div id="panier-modal" class="modal">
     <div class="modal-content">
-        <h2 style="border-bottom: 2px solid var(--or); padding-bottom: 10px;">Mon Panier</h2>
-        <div id="panier-liste"></div>
+        <h2 style="border-bottom: 2px solid var(--or); padding-bottom: 10px; margin-top:0;">Mon Panier</h2>
+        <div id="panier-liste" style="max-height: 200px; overflow-y: auto;"></div>
         
-        <hr>
-        <h4>Mes Coordonnées</h4>
+        <hr style="margin: 15px 0;">
+        <h4 style="margin: 5px 0;">Coordonnées de Livraison</h4>
         <input type="text" id="client-nom" placeholder="Nom Complet">
-        <input type="tel" id="client-tel" placeholder="N° WhatsApp (Ex: +243...)">
-        <textarea id="client-adresse" rows="3" placeholder="Adresse complète de livraison (Commune, Quartier, Avenue, N°)"></textarea>
+        <input type="tel" id="client-tel" placeholder="N° WhatsApp (+243...)">
+        <textarea id="client-adresse" rows="2" placeholder="Adresse (Commune, Quartier...)"></textarea>
         
-        <h4>Paiement</h4>
+        <h4 style="margin: 15px 0 5px 0;">Mode de Paiement</h4>
         <select id="moyen-paiement">
             <option value="Orange Money">🟠 Orange Money</option>
             <option value="M-Pesa">🔴 M-Pesa</option>
             <option value="En espèces à la livraison">💵 En espèces à la livraison</option>
         </select>
         
-        <button class="btn-ajout" onclick="envoyerCommande()">VALIDER LA COMMANDE</button>
-        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:15px;">Fermer</button>
+        <button class="btn-ajout" onclick="envoyerCommande()" style="padding: 15px; font-size: 1.1em; margin-top: 15px;">🚀 VALIDER LA COMMANDE</button>
+        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:15px; padding: 10px;">Annuler & Fermer</button>
     </div>
 </div>
 
@@ -67,26 +74,18 @@
         const produits = await res.json();
         
         document.getElementById('boutique-liste').innerHTML = produits.map(p => {
-            let etatStock = '';
-            let btnActif = true;
+            let etatStock = p.stock === 'infini' || p.stock > 10 ? '<span class="stock-badge" style="background:#d4edda; color:#155724;">✅ En abondance</span>' : 
+                            (p.stock > 0 ? `<span class="stock-badge" style="background:#fff3cd; color:#856404;">⚠️ ${p.stock} restants</span>` : 
+                            '<span class="stock-badge" style="background:#f8d7da; color:#721c24;">❌ Épuisé</span>');
             
-            if (p.stock === 'infini' || p.stock > 10) {
-                etatStock = '<span class="stock-badge" style="background:#d4edda; color:#155724;">✅ Stock en abondance</span>';
-            } else if (p.stock > 0) {
-                etatStock = `<span class="stock-badge" style="background:#fff3cd; color:#856404;">⚠️ Presque en rupture (${p.stock} restants)</span>`;
-            } else {
-                etatStock = '<span class="stock-badge" style="background:#f8d7da; color:#721c24;">❌ Rupture de stock</span>';
-                btnActif = false;
-            }
-
             return `
             <div class="carte">
-                <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400x300?text=Image'">
+                <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400x300?text=Photo'">
                 <div class="info">
                     ${etatStock}
-                    <h3>${p.nom}</h3>
+                    <h3 style="margin: 5px 0; font-size: 1.1em;">${p.nom}</h3>
                     <div class="prix">${p.prix} ${p.devise}</div>
-                    ${btnActif ? `<button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix}, '${p.devise}')">AJOUTER AU PANIER</button>` : `<button class="btn-ajout" style="background:gray; border:none; cursor:not-allowed;">ÉPUISÉ</button>`}
+                    ${p.stock !== 0 && p.stock !== '0' ? `<button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix}, '${p.devise}')">AJOUTER</button>` : `<button class="btn-ajout" style="background:gray; border:none;">RUPTURE</button>`}
                 </div>
             </div>`;
         }).join('');
@@ -95,13 +94,12 @@
     function ajouterAuPanier(nom, prix, devise) {
         panier.push({nom, prix, devise});
         document.getElementById('panier-count').innerText = panier.length;
-        alert("Ajouté au panier !");
     }
 
     function ouvrirPanier() {
         document.getElementById('panier-modal').style.display = 'block';
         document.getElementById('panier-liste').innerHTML = panier.map(item => `
-            <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
                 <span>${item.nom}</span><b>${item.prix} ${item.devise}</b>
             </div>
         `).join('');
@@ -115,28 +113,16 @@
         const adresse = document.getElementById('client-adresse').value;
         const paiement = document.getElementById('moyen-paiement').value;
 
-        if(!nom || !tel || !adresse) return alert("Veuillez remplir votre nom, WhatsApp et adresse complète !");
+        if(!nom || !tel || !adresse) return alert("Remplissez vos coordonnées !");
 
-        const commande = {
-            client: { nom, telephone: tel, adresse },
-            articles: panier,
-            paiement: paiement
-        };
+        await fetch('/api/commandes', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ client: { nom, telephone: tel, adresse }, articles: panier, paiement: paiement }) });
 
-        const res = await fetch('/api/commandes', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(commande)
-        });
-
-        if(res.ok) {
-            alert("✅ Commande envoyée au DG ! Vous serez contacté sur WhatsApp.");
-            panier = [];
-            document.getElementById('panier-count').innerText = "0";
-            fermerPanier();
-        }
+        alert("✅ Commande validée ! Le DG vous contactera sur WhatsApp.");
+        panier = []; document.getElementById('panier-count').innerText = "0"; fermerPanier();
     }
-    chargerBoutique();
+    
+    // Forcer le rechargement sans cache
+    window.onload = chargerBoutique;
 </script>
 </body>
 </html>
