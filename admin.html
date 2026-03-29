@@ -15,7 +15,7 @@
         .section { display: none; background: var(--gris); padding: 15px; border-radius: 10px; border: 1px solid #444; overflow-x: auto; }
         .active-sec { display: block; }
         .form-box { background: #111; padding: 15px; border-radius: 8px; border: 1px solid var(--or); margin-bottom: 20px; }
-        input, select { background: #222; color: white; border: 1px solid #444; padding: 12px; margin: 5px 0; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        input, select, textarea { background: #222; color: white; border: 1px solid #444; padding: 12px; margin: 5px 0; border-radius: 5px; width: 100%; box-sizing: border-box; font-family: inherit; }
         .btn-or { background: var(--or); color: var(--noir); border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 5px; width: 100%; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85em; min-width: 550px; }
         th { background: var(--or); color: var(--noir); padding: 10px; text-align: left; }
@@ -69,6 +69,7 @@
             <h3 id="titre-form-stock">Ajouter un produit</h3>
             <input type="hidden" id="edit-id">
             <input type="text" id="nom" placeholder="Nom de l'article">
+            <textarea id="description" placeholder="Description du produit (taille, couleur, état...)" rows="3"></textarea>
             <input type="number" id="prix" placeholder="Prix">
             <select id="devise"><option value="$">Dollar ($)</option><option value="FC">Franc Congolais (FC)</option></select>
             <input type="file" id="image" accept="image/*">
@@ -127,6 +128,7 @@
         if(!p) return;
         document.getElementById('edit-id').value = p.id;
         document.getElementById('nom').value = p.nom;
+        document.getElementById('description').value = p.description || ''; // Charge la description
         document.getElementById('prix').value = p.prix;
         document.getElementById('devise').value = p.devise;
         document.getElementById('stock-qte').value = p.stock;
@@ -140,6 +142,7 @@
     function resetFormStock() {
         document.getElementById('edit-id').value = '';
         document.getElementById('nom').value = '';
+        document.getElementById('description').value = ''; // Reset description
         document.getElementById('prix').value = '';
         document.getElementById('stock-qte').value = '';
         document.getElementById('titre-form-stock').innerText = "Ajouter un produit";
@@ -151,6 +154,7 @@
         const id = document.getElementById('edit-id').value;
         const formData = new FormData();
         formData.append('nom', document.getElementById('nom').value);
+        formData.append('description', document.getElementById('description').value); // Envoie la description
         formData.append('prix', document.getElementById('prix').value);
         formData.append('devise', document.getElementById('devise').value);
         formData.append('stock', document.getElementById('stock-qte').value);
@@ -188,10 +192,8 @@
         const duree = document.getElementById('val-duree').value;
         if(!frais || !duree) return alert("Remplissez les frais et la durée !");
 
-        // Construction du contenu de la facture
         const contenuFacture = `------------------------------------------\n       FACTURE - SECONDE VIE\n------------------------------------------\nCLIENT : ${commandeEnCours.nom}\nCONTACT : ${commandeEnCours.tel}\nDATE : ${new Date().toLocaleDateString()}\n------------------------------------------\nFRAIS LIVRAISON : ${frais}\nDUREE ESTIMEE : ${duree}\n------------------------------------------\nSTATUT : VALIDEE ✅\nSERVICE CLIENT : +243 893 818 689\n------------------------------------------\nMerci de votre confiance !`;
 
-        // Téléchargement du fichier
         const blob = new Blob([contenuFacture], { type: 'text/plain' });
         const lien = document.createElement('a');
         lien.href = URL.createObjectURL(blob);
@@ -200,7 +202,6 @@
         lien.click();
         document.body.removeChild(lien);
 
-        // Mise à jour sur le serveur
         await fetch(`/api/commandes/${commandeEnCours.id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ fraisLivraison: frais, dureeLivraison: duree }) });
         
         document.getElementById('validation-box').style.display = 'none';
