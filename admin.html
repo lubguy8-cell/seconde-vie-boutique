@@ -179,12 +179,36 @@
         if(confirm("Supprimer cet article ?")) { await fetch(`/api/produits/${id}`, { method: 'DELETE' }); chargerStock(); }
     }
 
-    async function chargerCommandes() {
+  // Remplace toute la fonction chargerCommandes() dans ton fichier admin.html par celle-ci :
+
+async function chargerCommandes() {
+    try {
         const res = await fetch('/api/commandes');
         const data = await res.json();
-        document.getElementById('corps-cmd-attente').innerHTML = data.filter(c => c.statut === "En attente").map(c => `<tr><td><b>${c.client.nom}</b><br>📞 ${c.client.telephone}</td><td>${c.articles.map(a => a.nom).join(', ')}</td><td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px;">Valider</button></td></tr>`).join('');
-        document.getElementById('corps-cmd-histo').innerHTML = data.filter(c => c.statut === "Validée").map(c => `<tr><td>${c.client.nom}</td><td>Frais: ${c.fraisLivraison}</td><td>✅</td></tr>`).join('');
+        
+        // 1. Les commandes en attente
+        const attente = data.filter(c => c.statut === "En attente");
+        document.getElementById('corps-cmd-attente').innerHTML = attente.length > 0 ? attente.map(c => `
+            <tr>
+                <td><b>${c.client.nom}</b><br>📞 ${c.client.telephone}<br><small>${c.client.adresse}</small></td>
+                <td>${c.articles.map(a => a.nom).join(', ')}<br><b style="color:var(--or)">Total: ${c.articles.reduce((sum, a) => sum + parseFloat(a.prix), 0)} ${c.articles[0].devise}</b></td>
+                <td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px; font-size:0.8em;">Valider</button></td>
+            </tr>
+        `).join('') : '<tr><td colspan="3" style="text-align:center;">Aucune nouvelle commande</td></tr>';
+
+        // 2. L'historique des commandes validées
+        const validees = data.filter(c => c.statut === "Validée");
+        document.getElementById('corps-cmd-histo').innerHTML = validees.length > 0 ? validees.map(c => `
+            <tr>
+                <td>${c.client.nom}</td>
+                <td>Frais: ${c.fraisLivraison} | ${c.dureeLivraison}</td>
+                <td style="color:#25D366;">✅ Validée</td>
+            </tr>
+        `).join('') : '<tr><td colspan="3" style="text-align:center;">Historique vide</td></tr>';
+    } catch (e) {
+        console.error("Erreur chargement commandes:", e);
     }
+}
 
     function preparerValidation(id, nom, tel) {
         commandeEnCours = { id, nom, tel };
