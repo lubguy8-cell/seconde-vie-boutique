@@ -46,7 +46,7 @@
             <h3 style="color:var(--or);">Facturation : <span id="val-client-nom"></span></h3>
             <input type="number" id="val-frais" placeholder="Frais de livraison (ex: 5$)">
             <input type="text" id="val-duree" placeholder="Durée estimée (ex: 24h)">
-            <button class="btn-or" onclick="confirmerValidation()" style="background:#25D366; color:white;">Valider & WhatsApp</button>
+            <button class="btn-or" onclick="confirmerValidation()" style="background:#25D366; color:white;">Valider & Télécharger Facture</button>
             <button class="btn-or" onclick="document.getElementById('validation-box').style.display='none'" style="background:red; color:white;">Annuler</button>
         </div>
         <table>
@@ -186,10 +186,25 @@
     async function confirmerValidation() {
         const frais = document.getElementById('val-frais').value;
         const duree = document.getElementById('val-duree').value;
-        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nBonjour ${commandeEnCours.nom},\nVotre commande a été validée ! ✅\n\nFrais de livraison : ${frais}\nDurée estimée : ${duree}\n\nMerci de votre confiance.\nLe Service Client (+243 893 818 689)`);
-        window.open(`https://wa.me/${commandeEnCours.tel}?text=${msg}`);
+        if(!frais || !duree) return alert("Remplissez les frais et la durée !");
+
+        // Construction du contenu de la facture
+        const contenuFacture = `------------------------------------------\n       FACTURE - SECONDE VIE\n------------------------------------------\nCLIENT : ${commandeEnCours.nom}\nCONTACT : ${commandeEnCours.tel}\nDATE : ${new Date().toLocaleDateString()}\n------------------------------------------\nFRAIS LIVRAISON : ${frais}\nDUREE ESTIMEE : ${duree}\n------------------------------------------\nSTATUT : VALIDEE ✅\nSERVICE CLIENT : +243 893 818 689\n------------------------------------------\nMerci de votre confiance !`;
+
+        // Téléchargement du fichier
+        const blob = new Blob([contenuFacture], { type: 'text/plain' });
+        const lien = document.createElement('a');
+        lien.href = URL.createObjectURL(blob);
+        lien.download = `Facture_${commandeEnCours.nom}.txt`;
+        document.body.appendChild(lien);
+        lien.click();
+        document.body.removeChild(lien);
+
+        // Mise à jour sur le serveur
         await fetch(`/api/commandes/${commandeEnCours.id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ fraisLivraison: frais, dureeLivraison: duree }) });
+        
         document.getElementById('validation-box').style.display = 'none';
+        alert("Facture téléchargée avec succès !");
         chargerCommandes();
     }
 
