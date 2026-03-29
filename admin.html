@@ -6,97 +6,107 @@
     <title>DG SECONDE VIE - Administration</title>
     <style>
         :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #2a2a2a; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--noir); color: var(--blanc); display: flex; }
-        .sidebar { width: 260px; background: #000; height: 100vh; position: fixed; padding: 20px; border-right: 2px solid var(--or); overflow-y: auto;}
-        .sidebar h2 { color: var(--or); text-align: center; border-bottom: 2px solid var(--or); padding-bottom: 15px; }
-        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; transition: 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--noir); color: var(--blanc); display: flex; flex-direction: column; }
+        
+        /* RESPONSIVE DESIGN POUR TELEPHONE */
+        .sidebar { background: #000; padding: 10px; border-bottom: 2px solid var(--or); display: flex; overflow-x: auto; white-space: nowrap; }
+        .sidebar h2 { display: none; } /* Caché sur mobile pour gagner de la place */
+        .menu-item { padding: 10px 15px; cursor: pointer; border-radius: 8px; margin-right: 10px; border: 1px solid #333; font-size: 0.9em; }
         .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; }
-        .main { margin-left: 300px; padding: 30px; width: calc(100% - 340px); }
-        .section { display: none; background: var(--gris); padding: 25px; border-radius: 15px; border: 1px solid #444; }
+        
+        .main { padding: 15px; width: 100%; box-sizing: border-box; }
+        .section { display: none; background: var(--gris); padding: 15px; border-radius: 10px; border: 1px solid #444; overflow-x: auto; }
         .active-sec { display: block; }
-        .form-box { background: #111; padding: 20px; border-radius: 12px; border: 1px solid var(--or); margin-bottom: 20px; }
-        input, select { background: #222; color: white; border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px; width: 100%; box-sizing: border-box; }
-        input:focus, select:focus { border-color: var(--or); outline: none; }
-        .btn-or { background: var(--or); color: var(--noir); border: none; padding: 12px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; width: 100%; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111; font-size: 0.9em; }
-        th { background: var(--or); color: var(--noir); padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #333; }
-        .badge-attente { background: #554400; color: var(--or); padding: 5px 10px; border-radius: 10px; font-size: 0.8em; }
-        .badge-valide { background: #004d00; color: #00ff00; padding: 5px 10px; border-radius: 10px; font-size: 0.8em; }
+        
+        .form-box { background: #111; padding: 15px; border-radius: 8px; border: 1px solid var(--or); margin-bottom: 20px; }
+        input, select { background: #222; color: white; border: 1px solid #444; padding: 12px; margin: 5px 0; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        .btn-or { background: var(--or); color: var(--noir); border: none; padding: 12px; cursor: pointer; font-weight: bold; border-radius: 5px; width: 100%; margin-top: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85em; min-width: 500px; }
+        th { background: var(--or); color: var(--noir); padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        .badge-attente { background: #554400; color: var(--or); padding: 5px; border-radius: 5px; }
+
+        /* VERSION PC (Écrans larges) */
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            .sidebar { width: 260px; height: 100vh; position: fixed; flex-direction: column; border-right: 2px solid var(--or); border-bottom: none; }
+            .sidebar h2 { display: block; color: var(--or); text-align: center; border-bottom: 2px solid var(--or); padding-bottom: 15px; }
+            .menu-item { margin-bottom: 10px; margin-right: 0; }
+            .main { margin-left: 300px; padding: 30px; width: calc(100% - 340px); }
+        }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>Espace DG</h2>
-    <div class="menu-item active" onclick="ouvrirSection('cmd-attente', this)">📋 Commandes à Valider</div>
-    <div class="menu-item" onclick="ouvrirSection('cmd-historique', this)">📜 Historique Commandes</div>
-    <div class="menu-item" onclick="ouvrirSection('stock', this)">📦 Gestion de Stock</div>
+    <div class="menu-item active" onclick="ouvrirSection('cmd-attente', this)">📋 Commandes</div>
+    <div class="menu-item" onclick="ouvrirSection('cmd-historique', this)">📜 Historique</div>
+    <div class="menu-item" onclick="ouvrirSection('stock', this)">📦 Stock</div>
     <div class="menu-item" onclick="ouvrirSection('fournisseurs', this)">🤝 Fournisseurs</div>
 </div>
 
 <div class="main">
     <div id="cmd-attente" class="section active-sec">
-        <h1 style="color:var(--or)">Commandes à Valider</h1>
+        <h2 style="color:var(--or)">À Valider</h2>
         <div id="validation-box" class="form-box" style="display:none; background:#222;">
-            <h3 style="color:var(--or); margin-top:0;">Facturation pour <span id="val-client-nom"></span></h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <input type="number" id="val-frais" placeholder="Frais de livraison (ex: 5$)">
-                <input type="text" id="val-duree" placeholder="Durée estimée (ex: 24h, 2 jours)">
-            </div>
-            <button class="btn-or" onclick="confirmerValidation()" style="background:#25D366; color:white;">Valider & Envoyer WhatsApp</button>
+            <h3 style="color:var(--or);">Facturation : <span id="val-client-nom"></span></h3>
+            <input type="number" id="val-frais" placeholder="Frais de livraison (ex: 5$)">
+            <input type="text" id="val-duree" placeholder="Durée estimée (ex: 24h)">
+            <button class="btn-or" onclick="confirmerValidation()" style="background:#25D366; color:white;">Valider & WhatsApp</button>
             <button class="btn-or" onclick="document.getElementById('validation-box').style.display='none'" style="background:red; color:white;">Annuler</button>
         </div>
         <table>
-            <thead><tr><th>Date</th><th>Client & Adresse</th><th>Articles</th><th>Paiement</th><th>Action</th></tr></thead>
+            <thead><tr><th>Client</th><th>Articles</th><th>Action</th></tr></thead>
             <tbody id="corps-cmd-attente"></tbody>
         </table>
     </div>
 
     <div id="cmd-historique" class="section">
-        <h1 style="color:var(--or)">Historique des Ventes</h1>
+        <h2 style="color:var(--or)">Historique</h2>
         <table>
-            <thead><tr><th>Date</th><th>Client</th><th>Frais & Durée</th><th>Paiement</th><th>Statut</th></tr></thead>
+            <thead><tr><th>Client</th><th>Livraison</th><th>Statut</th></tr></thead>
             <tbody id="corps-cmd-histo"></tbody>
         </table>
     </div>
 
     <div id="stock" class="section">
-        <h1 style="color:var(--or)">Gestion de Stock</h1>
+        <h2 style="color:var(--or)">Gestion du Stock</h2>
         <div class="form-box">
-            <h3 id="form-titre" style="margin-top:0;">Ajouter un Produit</h3>
-            <input type="hidden" id="edit-id">
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-                <input type="text" id="nom" placeholder="Nom de l'article">
-                <input type="number" id="prix" placeholder="Prix">
-                <select id="devise">
-                    <option value="$">Dollar ($)</option>
-                    <option value="FC">Franc Congolais (FC)</option>
-                </select>
-            </div>
-            <label style="color:var(--or); font-size:0.9em;">Image (Optionnel si modification) :</label>
+            <input type="text" id="nom" placeholder="Nom de l'article">
+            <input type="number" id="prix" placeholder="Prix">
+            <select id="devise"><option value="$">Dollar ($)</option><option value="FC">Franc Congolais (FC)</option></select>
             <input type="file" id="image" accept="image/*">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <input type="text" id="stock-qte" placeholder="Quantité (ex: 10 ou 'infini')">
-                <input type="text" id="fournisseur" placeholder="Nom du Fournisseur">
-            </div>
-            <button id="btn-save" class="btn-or" onclick="sauvegarderProduit()">Ajouter au Stock</button>
+            <input type="text" id="stock-qte" placeholder="Quantité (ex: 10 ou 'infini')">
+            <select id="fournisseur-select">
+                <option value="">-- Choisir un fournisseur --</option>
+            </select>
+            <button class="btn-or" onclick="sauvegarderProduit()">Ajouter au Stock</button>
         </div>
         <table>
-            <thead><tr><th>Image</th><th>Produit</th><th>Prix</th><th>Stock Restant</th><th>Fournisseur</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Img</th><th>Produit</th><th>Stock</th><th>Action</th></tr></thead>
             <tbody id="corps-stock"></tbody>
         </table>
     </div>
 
     <div id="fournisseurs" class="section">
-        <h1 style="color:var(--or)">Liste des Fournisseurs</h1>
-        <p><i>Voici la liste de vos fournisseurs extraite de votre stock actuel :</i></p>
-        <ul id="liste-fournisseurs" style="line-height:2;"></ul>
+        <h2 style="color:var(--or)">Annuaire Fournisseurs</h2>
+        <div class="form-box">
+            <input type="text" id="fourn-nom" placeholder="Nom du Fournisseur">
+            <input type="tel" id="fourn-tel" placeholder="Numéro WhatsApp">
+            <button class="btn-or" onclick="ajouterFournisseur()">Enregistrer Fournisseur</button>
+        </div>
+        <table>
+            <thead><tr><th>Nom</th><th>Contact</th><th>Action</th></tr></thead>
+            <tbody id="corps-fournisseurs"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
     let commandeEnCours = null;
+    let listeFournisseurs = [];
 
     function ouvrirSection(id, el) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
@@ -105,104 +115,95 @@
         el.classList.add('active');
     }
 
-    // --- GESTION DES PRODUITS ---
+    // --- FOURNISSEURS ---
+    async function chargerFournisseurs() {
+        const res = await fetch('/api/fournisseurs');
+        listeFournisseurs = await res.json();
+        
+        // Mettre à jour le tableau
+        document.getElementById('corps-fournisseurs').innerHTML = listeFournisseurs.map(f => `
+            <tr>
+                <td><b>${f.nom}</b></td>
+                <td><a href="https://wa.me/${f.telephone}" target="_blank" style="color:#25D366;">${f.telephone}</a></td>
+                <td><button onclick="supprimerFournisseur('${f.id}')" style="background:red; color:white; border:none; padding:5px; border-radius:3px;">X</button></td>
+            </tr>
+        `).join('');
+
+        // Mettre à jour la liste déroulante dans le formulaire Stock
+        document.getElementById('fournisseur-select').innerHTML = `<option value="">-- Sélectionner un fournisseur --</option>` + 
+            listeFournisseurs.map(f => `<option value="${f.id}">${f.nom}</option>`).join('');
+    }
+
+    async function ajouterFournisseur() {
+        const nom = document.getElementById('fourn-nom').value;
+        const tel = document.getElementById('fourn-tel').value;
+        if(!nom) return alert("Nom requis");
+        await fetch('/api/fournisseurs', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nom, telephone: tel}) });
+        document.getElementById('fourn-nom').value = ''; document.getElementById('fourn-tel').value = '';
+        chargerFournisseurs();
+    }
+
+    async function supprimerFournisseur(id) {
+        if(confirm("Supprimer ce fournisseur ?")) {
+            await fetch(`/api/fournisseurs/${id}`, { method: 'DELETE' });
+            chargerFournisseurs();
+        }
+    }
+
+    // --- STOCK ---
     async function chargerStock() {
         const res = await fetch('/api/produits');
         const data = await res.json();
-        
-        // Affichage du stock
         document.getElementById('corps-stock').innerHTML = data.map(p => {
-            let etatStock = p.stock === 'infini' ? '<span style="color:green">Abondance</span>' : (p.stock > 0 ? `<span style="color:orange">${p.stock} restants</span>` : '<span style="color:red">Rupture</span>');
+            let fourn = listeFournisseurs.find(f => f.id === p.fournisseurId);
+            let nomFourn = fourn ? fourn.nom : 'Aucun';
+            let etatStock = p.stock === 'infini' ? '<span style="color:green">Infini</span>' : (p.stock > 0 ? `<span style="color:orange">${p.stock} restants</span>` : '<span style="color:red">Rupture</span>');
             return `<tr>
                 <td><img src="${p.image}" style="width:40px;height:40px;border-radius:5px;"></td>
-                <td>${p.nom}</td>
-                <td><b>${p.prix} ${p.devise}</b></td>
+                <td><b>${p.nom}</b><br>${p.prix} ${p.devise}<br><small style="color:gray">Fournisseur: ${nomFourn}</small></td>
                 <td>${etatStock}</td>
-                <td>${p.fournisseur}</td>
-                <td>
-                    <button onclick="editerProduit('${p.id}', '${p.nom}', '${p.prix}', '${p.devise}', '${p.stock}', '${p.fournisseur}')" style="background:blue; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">Modifier</button>
-                    <button onclick="supprimerProduit('${p.id}')" style="background:red; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">X</button>
-                </td>
+                <td><button onclick="supprimerProduit('${p.id}')" style="background:red; color:white; border:none; padding:5px 10px; border-radius:3px;">X</button></td>
             </tr>`;
         }).join('');
-
-        // Mise à jour fournisseurs
-        const fournisseurs = [...new Set(data.map(p => p.fournisseur).filter(f => f))];
-        document.getElementById('liste-fournisseurs').innerHTML = fournisseurs.map(f => `<li><b>${f}</b></li>`).join('');
     }
 
     async function sauvegarderProduit() {
-        const id = document.getElementById('edit-id').value;
         const formData = new FormData();
         formData.append('nom', document.getElementById('nom').value);
         formData.append('prix', document.getElementById('prix').value);
         formData.append('devise', document.getElementById('devise').value);
         formData.append('stock', document.getElementById('stock-qte').value);
-        formData.append('fournisseur', document.getElementById('fournisseur').value);
+        formData.append('fournisseurId', document.getElementById('fournisseur-select').value);
         
         const fileInput = document.getElementById('image');
         if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
 
-        const url = id ? `/api/produits/${id}` : '/api/produits';
-        const method = id ? 'PUT' : 'POST';
-
-        await fetch(url, { method: method, body: formData });
+        await fetch('/api/produits', { method: 'POST', body: formData });
         
-        // Reset form
-        document.getElementById('edit-id').value = '';
         document.getElementById('nom').value = ''; document.getElementById('prix').value = '';
-        document.getElementById('stock-qte').value = ''; document.getElementById('fournisseur').value = '';
         fileInput.value = '';
-        document.getElementById('form-titre').innerText = "Ajouter un Produit";
-        document.getElementById('btn-save').innerText = "Ajouter au Stock";
         chargerStock();
     }
 
-    function editerProduit(id, nom, prix, devise, stock, fournisseur) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('nom').value = nom;
-        document.getElementById('prix').value = prix;
-        document.getElementById('devise').value = devise;
-        document.getElementById('stock-qte').value = stock;
-        document.getElementById('fournisseur').value = fournisseur;
-        document.getElementById('form-titre').innerText = "Modifier le Produit";
-        document.getElementById('btn-save').innerText = "Enregistrer les modifications";
-        window.scrollTo(0, 0);
-    }
-
     async function supprimerProduit(id) {
-        if(confirm("Supprimer cet article ?")) {
-            await fetch(`/api/produits/${id}`, { method: 'DELETE' });
-            chargerStock();
-        }
+        if(confirm("Supprimer cet article ?")) { await fetch(`/api/produits/${id}`, { method: 'DELETE' }); chargerStock(); }
     }
 
-    // --- GESTION DES COMMANDES ---
+    // --- COMMANDES ---
     async function chargerCommandes() {
         const res = await fetch('/api/commandes');
         const data = await res.json();
         
-        const attente = data.filter(c => c.statut === "En attente");
-        const validees = data.filter(c => c.statut === "Validée");
-
-        document.getElementById('corps-cmd-attente').innerHTML = attente.map(c => `
+        document.getElementById('corps-cmd-attente').innerHTML = data.filter(c => c.statut === "En attente").map(c => `
             <tr>
-                <td>${c.date}</td>
                 <td><b>${c.client.nom}</b><br>📞 ${c.client.telephone}<br>📍 ${c.client.adresse}</td>
-                <td>${c.articles.map(a => a.nom).join(', ')}</td>
-                <td>${c.paiement}</td>
-                <td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px;">Valider & Facturer</button></td>
+                <td>${c.articles.map(a => a.nom).join(', ')}<br><b>Paiement:</b> ${c.paiement}</td>
+                <td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px; font-size:0.8em;">Valider</button></td>
             </tr>
         `).join('');
 
-        document.getElementById('corps-cmd-histo').innerHTML = validees.map(c => `
-            <tr>
-                <td>${c.date}</td>
-                <td>${c.client.nom}</td>
-                <td>Livraison: ${c.fraisLivraison} | Délai: ${c.dureeLivraison}</td>
-                <td>${c.paiement}</td>
-                <td><span class="badge-valide">Validée ✅</span></td>
-            </tr>
+        document.getElementById('corps-cmd-histo').innerHTML = data.filter(c => c.statut === "Validée").map(c => `
+            <tr><td>${c.client.nom}</td><td>Frais: ${c.fraisLivraison} | ${c.dureeLivraison}</td><td>✅</td></tr>
         `).join('');
     }
 
@@ -215,25 +216,17 @@
     async function confirmerValidation() {
         const frais = document.getElementById('val-frais').value;
         const duree = document.getElementById('val-duree').value;
-        if(!frais || !duree) return alert("Veuillez remplir les frais et la durée !");
+        if(!frais || !duree) return alert("Remplissez les frais et la durée !");
 
-        // Message WhatsApp
-        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nBonjour ${commandeEnCours.nom},\nVotre commande a été validée par la Direction ! ✅\n\nFrais de livraison : ${frais}\nDurée de livraison estimée : ${duree}\n\nMerci pour votre confiance. Le DG.`);
+        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nBonjour ${commandeEnCours.nom},\nVotre commande a été validée ! ✅\n\nFrais de livraison : ${frais}\nDurée estimée : ${duree}\n\nMerci de votre confiance. Le DG.`);
         window.open(`https://wa.me/${commandeEnCours.tel}?text=${msg}`);
 
-        // Mise à jour BDD
-        await fetch(`/api/commandes/${commandeEnCours.id}`, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ fraisLivraison: frais, dureeLivraison: duree })
-        });
-
+        await fetch(`/api/commandes/${commandeEnCours.id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ fraisLivraison: frais, dureeLivraison: duree }) });
         document.getElementById('validation-box').style.display = 'none';
         chargerCommandes();
     }
 
-    setInterval(chargerCommandes, 30000);
-    window.onload = () => { chargerStock(); chargerCommandes(); };
+    window.onload = async () => { await chargerFournisseurs(); chargerStock(); chargerCommandes(); };
 </script>
 </body>
 </html>
