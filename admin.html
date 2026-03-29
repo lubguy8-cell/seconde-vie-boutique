@@ -119,18 +119,7 @@
     async function chargerStock() {
         const res = await fetch('/api/produits');
         listeProduits = await res.json();
-        document.getElementById('corps-stock').innerHTML = listeProduits.map(p => {
-            let f = listeFournisseurs.find(fourn => fourn.id === p.fournisseurId);
-            return `<tr>
-                <td><img src="${p.image}" style="width:40px;height:40px;border-radius:5px;"></td>
-                <td><b>${p.nom}</b><br>${p.prix}${p.devise}</td>
-                <td>${p.stock}</td>
-                <td>
-                    <button onclick="editerProduit('${p.id}')" style="background:blue;color:white;border:none;padding:5px;border-radius:3px;">Modifier</button>
-                    <button onclick="supprimerProduit('${p.id}')" style="background:red;color:white;border:none;padding:5px;border-radius:3px;">X</button>
-                </td>
-            </tr>`;
-        }).join('');
+        document.getElementById('corps-stock').innerHTML = listeProduits.map(p => `<tr><td><img src="${p.image}" style="width:40px;height:40px;border-radius:5px;"></td><td><b>${p.nom}</b><br>${p.prix}${p.devise}</td><td>${p.stock}</td><td><button onclick="editerProduit('${p.id}')" style="background:blue;color:white;border:none;padding:5px;border-radius:3px;margin-right:5px;">Modifier</button><button onclick="supprimerProduit('${p.id}')" style="background:red;color:white;border:none;padding:5px;border-radius:3px;">X</button></td></tr>`).join('');
     }
 
     function editerProduit(id) {
@@ -179,36 +168,14 @@
         if(confirm("Supprimer cet article ?")) { await fetch(`/api/produits/${id}`, { method: 'DELETE' }); chargerStock(); }
     }
 
-  // Remplace toute la fonction chargerCommandes() dans ton fichier admin.html par celle-ci :
-
-async function chargerCommandes() {
-    try {
-        const res = await fetch('/api/commandes');
-        const data = await res.json();
-        
-        // 1. Les commandes en attente
-        const attente = data.filter(c => c.statut === "En attente");
-        document.getElementById('corps-cmd-attente').innerHTML = attente.length > 0 ? attente.map(c => `
-            <tr>
-                <td><b>${c.client.nom}</b><br>📞 ${c.client.telephone}<br><small>${c.client.adresse}</small></td>
-                <td>${c.articles.map(a => a.nom).join(', ')}<br><b style="color:var(--or)">Total: ${c.articles.reduce((sum, a) => sum + parseFloat(a.prix), 0)} ${c.articles[0].devise}</b></td>
-                <td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px; font-size:0.8em;">Valider</button></td>
-            </tr>
-        `).join('') : '<tr><td colspan="3" style="text-align:center;">Aucune nouvelle commande</td></tr>';
-
-        // 2. L'historique des commandes validées
-        const validees = data.filter(c => c.statut === "Validée");
-        document.getElementById('corps-cmd-histo').innerHTML = validees.length > 0 ? validees.map(c => `
-            <tr>
-                <td>${c.client.nom}</td>
-                <td>Frais: ${c.fraisLivraison} | ${c.dureeLivraison}</td>
-                <td style="color:#25D366;">✅ Validée</td>
-            </tr>
-        `).join('') : '<tr><td colspan="3" style="text-align:center;">Historique vide</td></tr>';
-    } catch (e) {
-        console.error("Erreur chargement commandes:", e);
+    async function chargerCommandes() {
+        try {
+            const res = await fetch('/api/commandes');
+            const data = await res.json();
+            document.getElementById('corps-cmd-attente').innerHTML = data.filter(c => c.statut === "En attente").map(c => `<tr><td><b>${c.client.nom}</b><br>📞 ${c.client.telephone}</td><td>${c.articles.map(a => a.nom).join(', ')}</td><td><button onclick="preparerValidation('${c.id}', '${c.client.nom}', '${c.client.telephone}')" class="btn-or" style="padding:5px;">Valider</button></td></tr>`).join('');
+            document.getElementById('corps-cmd-histo').innerHTML = data.filter(c => c.statut === "Validée").map(c => `<tr><td>${c.client.nom}</td><td>Frais: ${c.fraisLivraison}</td><td>✅ Validée</td></tr>`).join('');
+        } catch (e) { console.log(e); }
     }
-}
 
     function preparerValidation(id, nom, tel) {
         commandeEnCours = { id, nom, tel };
@@ -219,7 +186,7 @@ async function chargerCommandes() {
     async function confirmerValidation() {
         const frais = document.getElementById('val-frais').value;
         const duree = document.getElementById('val-duree').value;
-        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nBonjour ${commandeEnCours.nom},\nVotre commande a été validée ! ✅\n\nFrais de livraison : ${frais}\nDurée estimée : ${duree}\n\nMerci de votre confiance.\nLe DG (+243 895 373 383)`);
+        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nBonjour ${commandeEnCours.nom},\nVotre commande a été validée ! ✅\n\nFrais de livraison : ${frais}\nDurée estimée : ${duree}\n\nMerci de votre confiance.\nLe Service Client (+243 893 818 689)`);
         window.open(`https://wa.me/${commandeEnCours.tel}?text=${msg}`);
         await fetch(`/api/commandes/${commandeEnCours.id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ fraisLivraison: frais, dureeLivraison: duree }) });
         document.getElementById('validation-box').style.display = 'none';
