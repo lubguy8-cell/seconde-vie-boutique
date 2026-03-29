@@ -23,13 +23,33 @@ const upload = multer({ storage: storage });
 
 const DB_PRODUITS = './produits.json';
 const DB_COMMANDES = './commandes.json';
+const DB_FOURNISSEURS = './fournisseurs.json'; // NOUVELLE BASE
+
+// --- FOURNISSEURS ---
+app.get('/api/fournisseurs', (req, res) => {
+    res.json(JSON.parse(fs.readFileSync(DB_FOURNISSEURS, 'utf8') || '[]'));
+});
+
+app.post('/api/fournisseurs', (req, res) => {
+    const fournisseurs = JSON.parse(fs.readFileSync(DB_FOURNISSEURS, 'utf8') || '[]');
+    const nouveau = { id: Date.now().toString(), nom: req.body.nom, telephone: req.body.telephone };
+    fournisseurs.push(nouveau);
+    fs.writeFileSync(DB_FOURNISSEURS, JSON.stringify(fournisseurs, null, 2));
+    res.json(nouveau);
+});
+
+app.delete('/api/fournisseurs/:id', (req, res) => {
+    let fournisseurs = JSON.parse(fs.readFileSync(DB_FOURNISSEURS, 'utf8') || '[]');
+    fournisseurs = fournisseurs.filter(f => f.id !== req.params.id);
+    fs.writeFileSync(DB_FOURNISSEURS, JSON.stringify(fournisseurs, null, 2));
+    res.send("Supprimé");
+});
 
 // --- PRODUITS ---
 app.get('/api/produits', (req, res) => {
     res.json(JSON.parse(fs.readFileSync(DB_PRODUITS, 'utf8') || '[]'));
 });
 
-// Ajouter
 app.post('/api/produits', upload.single('image'), (req, res) => {
     const produits = JSON.parse(fs.readFileSync(DB_PRODUITS, 'utf8') || '[]');
     const nouveau = {
@@ -38,7 +58,7 @@ app.post('/api/produits', upload.single('image'), (req, res) => {
         prix: parseFloat(req.body.prix),
         devise: req.body.devise,
         image: req.file ? `/uploads/${req.file.filename}` : req.body.imageExistante,
-        fournisseur: req.body.fournisseur,
+        fournisseurId: req.body.fournisseurId, // LIAISON AVEC LE FOURNISSEUR
         stock: req.body.stock === 'infini' ? 'infini' : parseInt(req.body.stock)
     };
     produits.push(nouveau);
@@ -46,25 +66,6 @@ app.post('/api/produits', upload.single('image'), (req, res) => {
     res.json(nouveau);
 });
 
-// Modifier
-app.put('/api/produits/:id', upload.single('image'), (req, res) => {
-    let produits = JSON.parse(fs.readFileSync(DB_PRODUITS, 'utf8') || '[]');
-    const index = produits.findIndex(p => p.id === req.params.id);
-    if (index !== -1) {
-        produits[index].nom = req.body.nom;
-        produits[index].prix = parseFloat(req.body.prix);
-        produits[index].devise = req.body.devise;
-        produits[index].fournisseur = req.body.fournisseur;
-        produits[index].stock = req.body.stock === 'infini' ? 'infini' : parseInt(req.body.stock);
-        if (req.file) produits[index].image = `/uploads/${req.file.filename}`;
-        fs.writeFileSync(DB_PRODUITS, JSON.stringify(produits, null, 2));
-        res.json(produits[index]);
-    } else {
-        res.status(404).send("Produit non trouvé");
-    }
-});
-
-// Supprimer
 app.delete('/api/produits/:id', (req, res) => {
     let produits = JSON.parse(fs.readFileSync(DB_PRODUITS, 'utf8') || '[]');
     produits = produits.filter(p => p.id !== req.params.id);
@@ -77,7 +78,6 @@ app.get('/api/commandes', (req, res) => {
     res.json(JSON.parse(fs.readFileSync(DB_COMMANDES, 'utf8') || '[]'));
 });
 
-// Nouvelle Commande Client
 app.post('/api/commandes', (req, res) => {
     const commandes = JSON.parse(fs.readFileSync(DB_COMMANDES, 'utf8') || '[]');
     const nouvelle = { ...req.body, id: "CMD-" + Date.now(), date: new Date().toLocaleString(), statut: "En attente" };
@@ -86,7 +86,6 @@ app.post('/api/commandes', (req, res) => {
     res.json(nouvelle);
 });
 
-// Valider Commande par le DG
 app.patch('/api/commandes/:id', (req, res) => {
     let commandes = JSON.parse(fs.readFileSync(DB_COMMANDES, 'utf8') || '[]');
     const index = commandes.findIndex(c => c.id === req.params.id);
@@ -101,4 +100,4 @@ app.patch('/api/commandes/:id', (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`Serveur SECONDE VIE activé sur le port ${port}`));
+app.listen(port, () => console.log(`Serveur actif sur le port ${port}`));
