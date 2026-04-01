@@ -5,7 +5,7 @@ const path = require('path');
 
 const app = express();
 
-// --- CONFIGURATION TAILLE IMAGES ---
+// --- CONFIGURATION TAILLE IMAGES (Indispensable pour la galerie) ---
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors());
@@ -18,12 +18,14 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ GL HUB AGENCY : Connexion MongoDB établie !'))
     .catch(err => console.error('❌ Erreur MongoDB :', err));
 
-// --- MODÈLE ---
+// --- MODÈLE MIS À JOUR ---
 const ProductSchema = new mongoose.Schema({
     name: { type: String, required: true },
     price: { type: Number, required: true },
     description: String,
-    imageUrl: String,
+    imageUrl: String, // C'est ici que sera stockée la photo de ta galerie
+    fournisseur: String,
+    stock: String,
     createdAt: { type: Date, default: Date.now }
 });
 const Product = mongoose.model('Product', ProductSchema);
@@ -40,11 +42,29 @@ app.get('/api/products', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
     try {
-        const newProduct = new Product(req.body);
+        // On récupère les données envoyées par ton formulaire DG
+        const newProduct = new Product({
+            name: req.body.name,
+            price: req.body.price,
+            description: req.body.description,
+            imageUrl: req.body.imageUrl,
+            fournisseur: req.body.fournisseur,
+            stock: req.body.stock
+        });
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
     } catch (err) {
         res.status(400).json({ message: "Erreur ajout" });
+    }
+});
+
+// Route pour supprimer un article (Bouton supprimer de ton tableau)
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        await Product.findByIdAndDelete(req.params.id);
+        res.json({ message: "Article supprimé" });
+    } catch (err) {
+        res.status(500).json({ message: "Erreur suppression" });
     }
 });
 

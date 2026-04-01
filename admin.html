@@ -36,14 +36,17 @@
         <div style="background:#f9f9f9; padding:20px; border-radius:10px; margin-bottom:20px;">
             <input type="text" id="nom" placeholder="Nom de l'article">
             <input type="number" id="prix" placeholder="Prix ($)">
-            <input type="text" id="img" placeholder="Lien image (URL)">
+            
+            <label style="font-size: 0.9em; margin-left: 10px;">Photo : </label>
+            <input type="file" id="imgFile" accept="image/*">
+            
             <input type="text" id="fours" placeholder="Fournisseur">
             <select id="stk">
                 <option value="infini">Stock Infini</option>
                 <option value="1">1 exemplaire</option>
                 <option value="5">5 exemplaires</option>
             </select>
-            <button onclick="ajouter()" style="background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer;">PUBLIER</button>
+            <button onclick="ajouter()" style="background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border: 1px solid var(--or);">PUBLIER</button>
         </div>
         <table id="table-art">
             <thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Fournisseur</th><th>Action</th></tr></thead>
@@ -70,17 +73,54 @@
         if(id === 'commandes') chargerCommandes();
     }
 
+    // NOUVELLE FONCTION POUR AJOUTER AVEC IMAGE LOCALE
     async function ajouter() {
-        const p = { nom: document.getElementById('nom').value, prix: document.getElementById('prix').value, image: document.getElementById('img').value, fournisseur: document.getElementById('fours').value, stock: document.getElementById('stk').value };
-        await fetch('/api/produits', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
-        chargerArticles();
+        const fileInput = document.getElementById('imgFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert("Veuillez choisir une photo dans votre galerie !");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = async function() {
+            const p = { 
+                nom: document.getElementById('nom').value, 
+                prix: document.getElementById('prix').value, 
+                imageUrl: reader.result, // L'image transformée en texte
+                fournisseur: document.getElementById('fours').value, 
+                stock: document.getElementById('stk').value 
+            };
+
+            const response = await fetch('/api/products', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(p) 
+            });
+
+            if (response.ok) {
+                alert("Article publié avec succès !");
+                fileInput.value = ""; // Vide le champ photo
+                document.getElementById('nom').value = "";
+                document.getElementById('prix').value = "";
+                chargerArticles();
+            }
+        };
+        reader.readAsDataURL(file);
     }
 
     async function chargerArticles() {
-        const res = await fetch('/api/produits');
+        const res = await fetch('/api/products');
         const data = await res.json();
         document.getElementById('corps-art').innerHTML = data.map(p => `
-            <tr><td>${p.nom}</td><td>${p.prix}$</td><td>${p.stock}</td><td>${p.fournisseur}</td><td><button onclick="suppr(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">Supprimer</button></td></tr>
+            <tr>
+                <td>${p.name}</td>
+                <td>${p.price}$</td>
+                <td>${p.stock || 'N/A'}</td>
+                <td>${p.fournisseur || 'GL HUB'}</td>
+                <td><button onclick="suppr('${p._id}')" style="color:red; background:none; border:none; cursor:pointer;">Supprimer</button></td>
+            </tr>
         `).join('');
     }
 
@@ -105,7 +145,6 @@
         fetch(`/api/commandes/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({statut: "Confirmée"}) }).then(() => chargerCommandes());
     }
 
-    // MISE À JOUR AUTO TOUTES LES 30 SECONDES
     setInterval(chargerCommandes, 30000);
     window.onload = () => { chargerArticles(); chargerCommandes(); };
 </script>
