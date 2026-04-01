@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DG SECONDE VIE - Gestion</title>
+    <style>
+        :root { --noir: #1a1a1a; --or: #D4AF37; --gris: #f4f4f4; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); display: flex; }
+        .sidebar { width: 260px; background: var(--noir); color: white; height: 100vh; position: fixed; padding: 20px; }
+        .sidebar h2 { color: var(--or); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
+        .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; }
+        .main { margin-left: 300px; padding: 30px; width: 100%; }
+        .section { display: none; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .active-sec { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; background: #eee; }
+        .badge-attente { background: #ffeeba; color: #856404; }
+        .badge-ok { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>DG SECONDE VIE</h2>
+    <div class="menu-item active" onclick="ouvrirSection('articles', this)">📦 Boutique & Stocks</div>
+    <div class="menu-item" onclick="ouvrirSection('commandes', this)">📋 Commandes Reçues</div>
+</div>
+
+<div class="main">
+    <div id="articles" class="section active-sec">
+        <h1>Gestion des Articles</h1>
+        <div style="background:#f9f9f9; padding:20px; border-radius:10px; margin-bottom:20px;">
+            <input type="text" id="nom" placeholder="Nom de l'article">
+            <input type="number" id="prix" placeholder="Prix ($)">
+            <input type="text" id="img" placeholder="Lien image (URL)">
+            <input type="text" id="fours" placeholder="Fournisseur">
+            <select id="stk">
+                <option value="infini">Stock Infini</option>
+                <option value="1">1 exemplaire</option>
+                <option value="5">5 exemplaires</option>
+            </select>
+            <button onclick="ajouter()" style="background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer;">PUBLIER</button>
+        </div>
+        <table id="table-art">
+            <thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Fournisseur</th><th>Action</th></tr></thead>
+            <tbody id="corps-art"></tbody>
+        </table>
+    </div>
+
+    <div id="commandes" class="section">
+        <h1>Commandes Reçues</h1>
+        <table id="table-cmd">
+            <thead><tr><th>Date</th><th>Client</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Action</th></tr></thead>
+            <tbody id="corps-cmd"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function ouvrirSection(id, el) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        document.getElementById(id).classList.add('active-sec');
+        el.classList.add('active');
+        if(id === 'articles') chargerArticles();
+        if(id === 'commandes') chargerCommandes();
+    }
+
+    async function ajouter() {
+        const p = { nom: document.getElementById('nom').value, prix: document.getElementById('prix').value, image: document.getElementById('img').value, fournisseur: document.getElementById('fours').value, stock: document.getElementById('stk').value };
+        await fetch('/api/produits', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) });
+        chargerArticles();
+    }
+
+    async function chargerArticles() {
+        const res = await fetch('/api/produits');
+        const data = await res.json();
+        document.getElementById('corps-art').innerHTML = data.map(p => `
+            <tr><td>${p.nom}</td><td>${p.prix}$</td><td>${p.stock}</td><td>${p.fournisseur}</td><td><button onclick="suppr(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">Supprimer</button></td></tr>
+        `).join('');
+    }
+
+    async function chargerCommandes() {
+        const res = await fetch('/api/commandes');
+        const data = await res.json();
+        document.getElementById('corps-cmd').innerHTML = data.map(c => `
+            <tr>
+                <td>${c.date}</td>
+                <td>${c.client.nom}<br><small>${c.client.telephone}</small></td>
+                <td>${c.total}$</td>
+                <td><b>${c.paiement}</b></td>
+                <td><span class="badge ${c.statut==='En attente'?'badge-attente':'badge-ok'}">${c.statut}</span></td>
+                <td><button onclick="valider('${c.id}','${c.client.telephone}','${c.total}')" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">FACTURER</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function valider(id, tel, total) {
+        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nCommande : ${id}\nMontant : ${total}$\nStatut : CONFIRMÉE ✅\n\nVeuillez payer via Orange/M-Pesa pour livraison.`);
+        window.open(`https://wa.me/${tel}?text=${msg}`);
+        fetch(`/api/commandes/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({statut: "Confirmée"}) }).then(() => chargerCommandes());
+    }
+
+    // MISE À JOUR AUTO TOUTES LES 30 SECONDES
+    setInterval(chargerCommandes, 30000);
+    window.onload = () => { chargerArticles(); chargerCommandes(); };
+</script>
+</body>
+</html>
