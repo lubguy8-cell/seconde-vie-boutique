@@ -18,8 +18,7 @@
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; background: #eee; }
-        .badge-attente { background: #ffeeba; color: #856404; }
-        .badge-ok { background: #d4edda; color: #155724; }
+        .btn-publier { background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border:1px solid var(--or); border-radius:5px; }
     </style>
 </head>
 <body>
@@ -36,29 +35,19 @@
         <div style="background:#f9f9f9; padding:20px; border-radius:10px; margin-bottom:20px;">
             <input type="text" id="nom" placeholder="Nom de l'article">
             <input type="number" id="prix" placeholder="Prix ($)">
-            
-            <label style="font-size: 0.9em; margin-left: 10px;">Photo : </label>
+            <label style="font-size: 0.8em; margin-left: 10px;">Photo : </label>
             <input type="file" id="imgFile" accept="image/*">
-            
             <input type="text" id="fours" placeholder="Fournisseur">
             <select id="stk">
                 <option value="infini">Stock Infini</option>
                 <option value="1">1 exemplaire</option>
                 <option value="5">5 exemplaires</option>
             </select>
-            <button onclick="ajouter()" style="background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border: 1px solid var(--or);">PUBLIER</button>
+            <button class="btn-publier" onclick="ajouter()">PUBLIER</button>
         </div>
-        <table id="table-art">
+        <table>
             <thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Fournisseur</th><th>Action</th></tr></thead>
             <tbody id="corps-art"></tbody>
-        </table>
-    </div>
-
-    <div id="commandes" class="section">
-        <h1>Commandes Reçues</h1>
-        <table id="table-cmd">
-            <thead><tr><th>Date</th><th>Client</th><th>Total</th><th>Paiement</th><th>Statut</th><th>Action</th></tr></thead>
-            <tbody id="corps-cmd"></tbody>
         </table>
     </div>
 </div>
@@ -70,41 +59,33 @@
         document.getElementById(id).classList.add('active-sec');
         el.classList.add('active');
         if(id === 'articles') chargerArticles();
-        if(id === 'commandes') chargerCommandes();
     }
 
-    // NOUVELLE FONCTION POUR AJOUTER AVEC IMAGE LOCALE
     async function ajouter() {
-        const fileInput = document.getElementById('imgFile');
-        const file = fileInput.files[0];
-        
-        if (!file) {
-            alert("Veuillez choisir une photo dans votre galerie !");
-            return;
-        }
+        const file = document.getElementById('imgFile').files[0];
+        if (!file) { alert("S'il vous plaît, choisissez une photo !"); return; }
 
         const reader = new FileReader();
         reader.onloadend = async function() {
-            const p = { 
-                nom: document.getElementById('nom').value, 
-                prix: document.getElementById('prix').value, 
-                imageUrl: reader.result, // L'image transformée en texte
-                fournisseur: document.getElementById('fours').value, 
-                stock: document.getElementById('stk').value 
+            const article = {
+                name: document.getElementById('nom').value,
+                price: document.getElementById('prix').value,
+                imageUrl: reader.result,
+                fournisseur: document.getElementById('fours').value,
+                stock: document.getElementById('stk').value
             };
 
-            const response = await fetch('/api/products', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(p) 
+            const res = await fetch('/api/products', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(article)
             });
 
-            if (response.ok) {
+            if(res.ok) {
                 alert("Article publié avec succès !");
-                fileInput.value = ""; // Vide le champ photo
-                document.getElementById('nom').value = "";
-                document.getElementById('prix').value = "";
-                chargerArticles();
+                location.reload();
+            } else {
+                alert("Erreur lors de la publication.");
             }
         };
         reader.readAsDataURL(file);
@@ -117,36 +98,21 @@
             <tr>
                 <td>${p.name}</td>
                 <td>${p.price}$</td>
-                <td>${p.stock || 'N/A'}</td>
-                <td>${p.fournisseur || 'GL HUB'}</td>
-                <td><button onclick="suppr('${p._id}')" style="color:red; background:none; border:none; cursor:pointer;">Supprimer</button></td>
+                <td>${p.stock || 'Infini'}</td>
+                <td>${p.fournisseur || 'Inconnu'}</td>
+                <td><button onclick="supprimer('${p._id}')" style="color:red; cursor:pointer; border:none; background:none;">Supprimer</button></td>
             </tr>
         `).join('');
     }
 
-    async function chargerCommandes() {
-        const res = await fetch('/api/commandes');
-        const data = await res.json();
-        document.getElementById('corps-cmd').innerHTML = data.map(c => `
-            <tr>
-                <td>${c.date}</td>
-                <td>${c.client.nom}<br><small>${c.client.telephone}</small></td>
-                <td>${c.total}$</td>
-                <td><b>${c.paiement}</b></td>
-                <td><span class="badge ${c.statut==='En attente'?'badge-attente':'badge-ok'}">${c.statut}</span></td>
-                <td><button onclick="valider('${c.id}','${c.client.telephone}','${c.total}')" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">FACTURER</button></td>
-            </tr>
-        `).join('');
+    async function supprimer(id) {
+        if(confirm("Voulez-vous supprimer cet article ?")) {
+            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            chargerArticles();
+        }
     }
 
-    function valider(id, tel, total) {
-        const msg = encodeURIComponent(`*FACTURE SECONDE VIE*\n\nCommande : ${id}\nMontant : ${total}$\nStatut : CONFIRMÉE ✅\n\nVeuillez payer via Orange/M-Pesa pour livraison.`);
-        window.open(`https://wa.me/${tel}?text=${msg}`);
-        fetch(`/api/commandes/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({statut: "Confirmée"}) }).then(() => chargerCommandes());
-    }
-
-    setInterval(chargerCommandes, 30000);
-    window.onload = () => { chargerArticles(); chargerCommandes(); };
+    window.onload = chargerArticles;
 </script>
 </body>
 </html>
