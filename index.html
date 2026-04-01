@@ -3,142 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SECONDE VIE - Boutique Officielle</title>
+    <title>Seconde Vie | Boutique Officielle</title>
     <style>
-        :root { --noir: #1a1a1a; --or: #D4AF37; --blanc: #ffffff; --gris: #f9f9f9; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--gris); color: var(--noir); }
-        header { background: var(--noir); color: var(--or); padding: 20px; text-align: center; border-bottom: 3px solid var(--or); position: sticky; top: 0; z-index: 100; }
-        .panier-btn { position: fixed; right: 20px; top: 85px; background: var(--or); color: var(--noir); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 99; }
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 30px; }
-        .carte { background: var(--blanc); border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.3s; }
-        .carte img { width: 100%; height: 250px; object-fit: cover; }
-        .info { padding: 15px; text-align: center; }
-        .prix { font-size: 1.4em; color: var(--or); font-weight: bold; margin: 10px 0; }
-        .btn-ajout { background: var(--noir); color: var(--or); border: 2px solid var(--or); width: 100%; padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); overflow-y: auto; }
-        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 90%; max-width: 450px; border-radius: 12px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-size: 2rem; }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        #products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-card img {
+            max-width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        .btn-whatsapp {
+            display: inline-block;
+            background-color: #25D366;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            width: 80%;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>SECONDE VIE</h1>
-    <p>L'Art du Portrait & La Mode de Seconde Main</p>
-</header>
+    <header>
+        <h1>🛍️ Seconde Vie</h1>
+        <p>La qualité à petit prix</p>
+    </header>
 
-<div class="panier-btn" onclick="ouvrirPanier()">🛒 Panier (<span id="panier-count">0</span>)</div>
-
-<div class="container" id="boutique-liste">
-    </div>
-
-<div id="panier-modal" class="modal">
-    <div class="modal-content">
-        <h2 style="border-bottom: 2px solid var(--or); padding-bottom: 10px;">Ma Commande</h2>
-        <div id="panier-liste"></div>
-        <p><b>Total Articles : <span id="total-prix">0</span> $</b></p>
-        
-        <hr>
-        <h4>Tes Informations</h4>
-        <input type="text" id="client-nom" placeholder="Nom Complet">
-        <input type="tel" id="client-tel" placeholder="N° WhatsApp (Ex: +243...)">
-        
-        <h4>Paiement & Livraison</h4>
-        <select id="moyen-paiement">
-            <option value="Orange Money">🟠 Orange Money</option>
-            <option value="M-Pesa">🔴 M-Pesa</option>
-            <option value="En espèces à la livraison">💵 En espèces à la livraison</option>
-        </select>
-
-        <select id="frais-livraison" onchange="calculerTotal()">
-            <option value="0">Retrait à l'agence (Gratuit)</option>
-            <option value="5">Gombe / Lingwala (5$)</option>
-            <option value="7">Limete / Ngaliema (7$)</option>
-            <option value="10">Autres communes (10$)</option>
-        </select>
-        
-        <p style="font-size: 0.8em; color: gray;">Délai de livraison : 24h - 48h</p>
-        <h2 id="grand-total" style="color:var(--or)">Total : 0 $</h2>
-        
-        <button class="btn-ajout" onclick="envoyerCommande()">VALIDER LA COMMANDE</button>
-        <button onclick="fermerPanier()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:10px;">Annuler</button>
-    </div>
-</div>
-
-<script>
-    let panier = [];
-    let prixTotalArticles = 0;
-
-    async function chargerBoutique() {
-        const res = await fetch('/api/produits');
-        const produits = await res.json();
-        document.getElementById('boutique-liste').innerHTML = produits.map(p => `
-            <div class="carte">
-                <img src="${p.image}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Indisponible'">
-                <div class="info">
-                    <div style="font-size:0.7em; color:gray">${p.stock === 'infini' ? '✅ DISPONIBLE' : '🔥 PLUS QUE ' + p.stock}</div>
-                    <h3>${p.nom}</h3>
-                    <div class="prix">${p.prix} $</div>
-                    <button class="btn-ajout" onclick="ajouterAuPanier('${p.nom}', ${p.prix})">AJOUTER AU PANIER</button>
-                </div>
+    <div class="container">
+        <div id="products-grid">
             </div>
-        `).join('');
-    }
+    </div>
 
-    function ajouterAuPanier(nom, prix) {
-        panier.push({nom, prix});
-        document.getElementById('panier-count').innerText = panier.length;
-        alert("Ajouté !");
-    }
+    <script>
+        // Ton numéro de téléphone WhatsApp (avec l'indicatif)
+        const numeroWhatsApp = "243895373383";
 
-    function ouvrirPanier() {
-        document.getElementById('panier-modal').style.display = 'block';
-        prixTotalArticles = 0;
-        document.getElementById('panier-liste').innerHTML = panier.map(item => {
-            prixTotalArticles += item.prix;
-            return `<div style="display:flex; justify-content:space-between; padding:5px 0;"><span>${item.nom}</span><b>${item.prix}$</b></div>`;
-        }).join('');
-        calculerTotal();
-    }
-
-    function calculerTotal() {
-        const frais = parseInt(document.getElementById('frais-livraison').value) || 0;
-        document.getElementById('total-prix').innerText = prixTotalArticles;
-        document.getElementById('grand-total').innerText = "Total : " + (prixTotalArticles + frais) + " $";
-    }
-
-    function fermerPanier() { document.getElementById('panier-modal').style.display = 'none'; }
-
-    async function envoyerCommande() {
-        const nom = document.getElementById('client-nom').value;
-        const tel = document.getElementById('client-tel').value;
-        const paiement = document.getElementById('moyen-paiement').value;
-        const frais = document.getElementById('frais-livraison').value;
-
-        if(!nom || !tel) return alert("Veuillez remplir vos coordonnées DG !");
-
-        const commande = {
-            client: { nom, telephone: tel },
-            articles: panier,
-            total: prixTotalArticles + parseInt(frais),
-            paiement: paiement,
-            fraisLivraison: frais
-        };
-
-        const res = await fetch('/api/commandes', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(commande)
-        });
-
-        if(res.ok) {
-            alert("✅ Demande envoyée ! Attends la confirmation du DG sur WhatsApp.");
-            panier = [];
-            document.getElementById('panier-count').innerText = "0";
-            fermerPanier();
-        }
-    }
-    chargerBoutique();
-</script>
+        // Récupération des produits depuis ta base de données MongoDB
+        fetch('/api/products')
+            .then(response => response.json())
+            .then(products => {
+                const grid = document.getElementById('products-grid');
+                products.forEach(product => {
+                    const messageWa = encodeURIComponent(`Bonjour, je suis intéressé par l'article : ${product.name} au prix de ${product.price}$`);
+                    
+                    grid.innerHTML += `
+                        <div class="product-card">
+                            <img src="${product.imageUrl}" alt="${product.name}">
+                            <h3>${product.name}</h3>
+                            <p>${product.description}</p>
+                            <div class="price">${product.price} $</div>
+                            <a href="https://wa.me/${numeroWhatsApp}?text=${messageWa}" class="btn-whatsapp" target="_blank">
+                                💬 Acheter sur WhatsApp
+                            </a>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => console.error('Erreur lors du chargement des produits:', error));
+    </script>
 </body>
 </html>
