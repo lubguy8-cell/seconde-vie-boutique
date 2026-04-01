@@ -3,23 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seconde Vie - GL HUB</title>
+    <title>Seconde Vie - Boutique</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
         header { background: #2c3e50; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
         .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
-        
-        .admin-panel { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 40px; }
-        .admin-panel input, .admin-panel textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .admin-panel button { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; }
-
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         .product-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
         .product-card:hover { transform: translateY(-5px); }
         .product-card img { width: 100%; height: 200px; object-fit: cover; }
         .product-info { padding: 15px; text-align: center; }
         .product-price { color: #e74c3c; font-size: 20px; font-weight: bold; margin: 10px 0; }
-        
         .whatsapp-btn { background: #25d366; color: white; text-decoration: none; padding: 10px; border-radius: 5px; display: block; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
@@ -28,15 +22,6 @@
 <header>🛍️ SECONDE VIE BY GL HUB</header>
 
 <div class="container">
-    <div class="admin-panel">
-        <h3>Ajouter un nouvel article</h3>
-        <input type="file" id="prodImage" accept="image/*">
-        <input type="text" id="prodName" placeholder="Nom du produit">
-        <input type="number" id="prodPrice" placeholder="Prix en $">
-        <textarea id="prodDesc" placeholder="Petite description..."></textarea>
-        <button onclick="saveProduct()">Publier l'annonce</button>
-    </div>
-
     <div class="products-grid" id="grid"></div>
 </div>
 
@@ -58,33 +43,7 @@
             </div>
         `).join('');
     }
-
-    function saveProduct() {
-        const file = document.getElementById('prodImage').files[0];
-        const reader = new FileReader();
-
-        reader.onloadend = async function() {
-            const data = {
-                name: document.getElementById('prodName').value,
-                price: document.getElementById('prodPrice').value,
-                description: document.getElementById('prodDesc').value,
-                imageUrl: reader.result
-            };
-
-            await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            location.reload();
-        };
-
-        if (file) reader.readAsDataURL(file);
-        else alert("Choisis une photo !");
-    }
-
     loadProducts();
 </script>
-
 </body>
 </html>
