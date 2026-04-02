@@ -12,25 +12,22 @@
         .menu-item { padding: 15px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
         .menu-item:hover, .active { background: var(--or); color: var(--noir); font-weight: bold; }
         .main { margin-left: 300px; padding: 30px; width: 100%; }
-        .section { display: none; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .active-sec { display: block; }
+        .section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn-publier { background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border:1px solid var(--or); border-radius:5px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
-        .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; background: #eee; }
-        .btn-publier { background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border:1px solid var(--or); border-radius:5px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>DG SECONDE VIE</h2>
-    <div class="menu-item active" onclick="ouvrirSection('articles', this)">📦 Boutique & Stocks</div>
-    <div class="menu-item" onclick="ouvrirSection('commandes', this)">📋 Commandes Reçues</div>
+    <div class="menu-item active">📦 Boutique & Stocks</div>
 </div>
 
 <div class="main">
-    <div id="articles" class="section active-sec">
+    <div class="section">
         <h1>Gestion des Articles</h1>
         <div style="background:#f9f9f9; padding:20px; border-radius:10px; margin-bottom:20px;">
             <input type="text" id="nom" placeholder="Nom de l'article">
@@ -39,12 +36,13 @@
             <input type="file" id="imgFile" accept="image/*">
             <input type="text" id="fours" placeholder="Fournisseur">
             <select id="stk">
-                <option value="infini">Stock Infini</option>
-                <option value="1">1 exemplaire</option>
-                <option value="5">5 exemplaires</option>
+                <option value="Stock Infini">Stock Infini</option>
+                <option value="1 exemplaire">1 exemplaire</option>
+                <option value="5 exemplaires">5 exemplaires</option>
             </select>
             <button class="btn-publier" onclick="ajouter()">PUBLIER</button>
         </div>
+        
         <table>
             <thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Fournisseur</th><th>Action</th></tr></thead>
             <tbody id="corps-art"></tbody>
@@ -53,14 +51,25 @@
 </div>
 
 <script>
-    function ouvrirSection(id, el) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active-sec'));
-        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-        document.getElementById(id).classList.add('active-sec');
-        el.classList.add('active');
-        if(id === 'articles') chargerArticles();
+    // 1. CHARGER LES ARTICLES AU DÉMARRAGE
+    async function chargerArticles() {
+        try {
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            const corps = document.getElementById('corps-art');
+            corps.innerHTML = data.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.price}$</td>
+                    <td>${p.stock}</td>
+                    <td>${p.fournisseur}</td>
+                    <td><button onclick="supprimer('${p._id}')" style="color:red; cursor:pointer; border:none; background:none;">Supprimer</button></td>
+                </tr>
+            `).join('');
+        } catch (err) { console.error("Erreur chargement:", err); }
     }
 
+    // 2. FONCTION POUR PUBLIER (Galerie -> Base64 -> MongoDB)
     async function ajouter() {
         const file = document.getElementById('imgFile').files[0];
         if (!file) { alert("S'il vous plaît, choisissez une photo !"); return; }
@@ -70,9 +79,10 @@
             const article = {
                 name: document.getElementById('nom').value,
                 price: document.getElementById('prix').value,
-                imageUrl: reader.result,
+                imageUrl: reader.result, // C'est ici que la photo part en texte
                 fournisseur: document.getElementById('fours').value,
-                stock: document.getElementById('stk').value
+                stock: document.getElementById('stk').value,
+                description: "Produit Seconde Vie"
             };
 
             const res = await fetch('/api/products', {
@@ -82,32 +92,19 @@
             });
 
             if(res.ok) {
-                alert("Article publié avec succès !");
+                alert("Article publié avec succès ! ✅");
                 location.reload();
             } else {
-                alert("Erreur lors de la publication.");
+                alert("Erreur de publication. Vérifiez la taille de l'image.");
             }
         };
         reader.readAsDataURL(file);
     }
 
-    async function chargerArticles() {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        document.getElementById('corps-art').innerHTML = data.map(p => `
-            <tr>
-                <td>${p.name}</td>
-                <td>${p.price}$</td>
-                <td>${p.stock || 'Infini'}</td>
-                <td>${p.fournisseur || 'Inconnu'}</td>
-                <td><button onclick="supprimer('${p._id}')" style="color:red; cursor:pointer; border:none; background:none;">Supprimer</button></td>
-            </tr>
-        `).join('');
-    }
-
+    // 3. FONCTION SUPPRIMER
     async function supprimer(id) {
         if(confirm("Voulez-vous supprimer cet article ?")) {
-            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            await fetch('/api/products/' + id, { method: 'DELETE' });
             chargerArticles();
         }
     }
