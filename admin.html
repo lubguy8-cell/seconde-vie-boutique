@@ -17,6 +17,7 @@
         .btn-publier { background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border:1px solid var(--or); border-radius:5px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        img.preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -44,14 +45,13 @@
         </div>
         
         <table>
-            <thead><tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Fournisseur</th><th>Action</th></tr></thead>
+            <thead><tr><th>Image</th><th>Produit</th><th>Prix</th><th>Stock</th><th>Action</th></tr></thead>
             <tbody id="corps-art"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // 1. CHARGER LES ARTICLES AU DÉMARRAGE
     async function chargerArticles() {
         try {
             const res = await fetch('/api/products');
@@ -59,51 +59,64 @@
             const corps = document.getElementById('corps-art');
             corps.innerHTML = data.map(p => `
                 <tr>
+                    <td><img src="${p.imageUrl}" class="preview"></td>
                     <td>${p.name}</td>
                     <td>${p.price}$</td>
                     <td>${p.stock}</td>
-                    <td>${p.fournisseur}</td>
                     <td><button onclick="supprimer('${p._id}')" style="color:red; cursor:pointer; border:none; background:none;">Supprimer</button></td>
                 </tr>
             `).join('');
         } catch (err) { console.error("Erreur chargement:", err); }
     }
 
-    // 2. FONCTION POUR PUBLIER (Galerie -> Base64 -> MongoDB)
     async function ajouter() {
         const file = document.getElementById('imgFile').files[0];
-        if (!file) { alert("S'il vous plaît, choisissez une photo !"); return; }
+        if (!file) { alert("Choisissez une photo !"); return; }
 
         const reader = new FileReader();
-        reader.onloadend = async function() {
-            const article = {
-                name: document.getElementById('nom').value,
-                price: document.getElementById('prix').value,
-                imageUrl: reader.result, // C'est ici que la photo part en texte
-                fournisseur: document.getElementById('fours').value,
-                stock: document.getElementById('stk').value,
-                description: "Produit Seconde Vie"
+        reader.onloadend = function() {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = async function() {
+                // --- COMPRESSION AUTOMATIQUE ---
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800; 
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); // Compression à 60% pour être très léger
+
+                const article = {
+                    name: document.getElementById('nom').value,
+                    price: document.getElementById('prix').value,
+                    imageUrl: compressedBase64,
+                    fournisseur: document.getElementById('fours').value,
+                    stock: document.getElementById('stk').value
+                };
+
+                const res = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(article)
+                });
+
+                if(res.ok) {
+                    alert("Article publié ! ✅");
+                    location.reload();
+                } else {
+                    alert("Erreur. Essayez une autre photo.");
+                }
             };
-
-            const res = await fetch('/api/products', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(article)
-            });
-
-            if(res.ok) {
-                alert("Article publié avec succès ! ✅");
-                location.reload();
-            } else {
-                alert("Erreur de publication. Vérifiez la taille de l'image.");
-            }
         };
         reader.readAsDataURL(file);
     }
 
-    // 3. FONCTION SUPPRIMER
     async function supprimer(id) {
-        if(confirm("Voulez-vous supprimer cet article ?")) {
+        if(confirm("Supprimer cet article ?")) {
             await fetch('/api/products/' + id, { method: 'DELETE' });
             chargerArticles();
         }
