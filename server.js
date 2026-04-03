@@ -3,25 +3,20 @@ const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
-const cors = require('cors');
-const path = require('path');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- MIDDLEWARES ---
-app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '')));
+app.use(express.static('.'));
 
-// --- 1. CONNEXION MONGODB ---
-const mongoURI = 'mongodb+srv://lubguy8_db_user:4bgwFcYISTj496Ro@cluster0.ftforz7.mongodb.net/seconde_vie?retryWrites=true&w=majority';
+// --- 1. CONNEXION MONGODB (TON LIEN MISE À JOUR) ---
+const mongoURI = 'mongodb+srv://lubguy8_db_user:4bgwFcYISTj496Ro@cluster0.ftforz7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
-  .then(() => console.log("Léopard connecté à MongoDB ! 🇨🇩 ✅"))
-  .catch(err => console.error("Erreur MongoDB :", err));
+    .then(() => console.log("Léopard connecté à MongoDB ! 🇨🇩 ✅"))
+    .catch(err => console.error("Erreur de connexion MongoDB :", err));
 
-// --- 2. CONFIGURATION CLOUDINARY ---
+// --- 2. CONFIGURATION CLOUDINARY (Pense à mettre TES clés ici) ---
 cloudinary.config({ 
   cloud_name: 'TON_CLOUD_NAME', 
   api_key: 'TA_CLE_API', 
@@ -32,60 +27,68 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: { 
     folder: 'seconde-vie-articles', 
-    allowed_formats: ['jpg', 'png', 'jpeg'],
-    // Cloudinary accepte presque toutes les tailles, pas de limite de poids ici
+    allowed_formats: ['jpg', 'png', 'jpeg'] 
   },
 });
 const upload = multer({ storage: storage });
 
-// --- 3. MODÈLE ---
+// --- 3. MODÈLES DE DONNÉES ---
 const Produit = mongoose.model('Produit', {
-  nom: String, 
-  prix: Number, 
-  image: String, 
-  fournisseurId: String, 
-  stock: String,
-  createdAt: { type: Date, default: Date.now }
+    nom: String, 
+    description: String, 
+    prix: Number, 
+    devise: String,
+    image: String, 
+    fournisseurId: String, 
+    stock: String
 });
 
-// --- 4. ROUTES ---
+const Commande = mongoose.model('Commande', {
+    client: Object, 
+    articles: Array, 
+    date: { type: Date, default: Date.now }, 
+    statut: { type: String, default: "En attente" },
+    fraisLivraison: String, 
+    dureeLivraison: String
+});
 
-// Récupérer les produits
+// --- 4. ROUTES API ---
+
+// Récupérer tous les produits
 app.get('/api/produits', async (req, res) => {
-  const produits = await Produit.find().sort({ createdAt: -1 });
-  res.json(produits);
+    try {
+        const produits = await Produit.find();
+        res.json(produits);
+    } catch (err) { res.status(500).send(err); }
 });
 
-// Ajouter un produit (IMAGE SUR CLOUDINARY)
+// Ajouter un produit avec image sur Cloudinary
 app.post('/api/produits', upload.single('image'), async (req, res) => {
-  try {
-    // Si aucune image n’est envoyée, erreur
-    if (!req.file) {
-      return res.status(400).json({ message: "Erreur. Veuillez choisir une photo." });
-    }
-
-    // Sauvegarde du produit avec l’URL de Cloudinary
-    const nouveau = new Produit({
-      nom: req.body.nom,
-      prix: req.body.prix,
-      fournisseurId: req.body.fournisseurId,
-      stock: req.body.stock,
-      image: req.file.path  // url générée par Cloudinary
-    });
-
-    await nouveau.save();
-    res.status(201).json(nouveau);
-
-  } catch (err) {
-    // Si Cloudinary ou MongoDB plante
-    res.status(500).json({ message: "Erreur. Essayez une autre photo.", error: err.message });
-  }
+    try {
+        const nouveauProduit = new Produit({
+            ...req.body,
+            image: req.file ? req.file.path : 'https://via.placeholder.com/150'
+        });
+        await nouveauProduit.save();
+        res.json(nouveauProduit);
+    } catch (err) { res.status(500).send(err); }
 });
 
-// Supprimer
+// Supprimer un produit
 app.delete('/api/produits/:id', async (req, res) => {
-  await Produit.findByIdAndDelete(req.params.id);
-  res.send("Supprimé");
+    try {
+        await Produit.findByIdAndDelete(req.params.id);
+        res.send("Article supprimé avec succès");
+    } catch (err) { res.status(500).send(err); }
 });
 
-app.listen(port, () => console.log(`🚀 Boutique active sur le port ${port}`));
+// Créer une commande
+app.post('/api/commandes', async (req, res) => {
+    try {
+        const nouvelleCommande = new Commande(req.body);
+        await nouvelleCommande.save();
+        res.json(nouvelleCommande);
+    } catch (err) { res.status(500).send(err); }
+});
+
+app.listen(port, () => console.log(`Boutique SECONDE VIE active sur le port ${port}`));
