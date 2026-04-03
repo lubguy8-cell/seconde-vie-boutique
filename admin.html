@@ -16,6 +16,7 @@
         input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
         .btn-publier { background:var(--noir); color:var(--or); padding:10px 20px; cursor:pointer; font-weight:bold; border:1px solid var(--or); border-radius:5px; transition: 0.3s; }
         .btn-publier:hover { background: var(--or); color: var(--noir); }
+        .btn-publier:disabled { background: #555; color: #ccc; cursor: not-allowed; border-color: #555; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
         img.thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd; }
@@ -61,7 +62,7 @@
 </div>
 
 <script>
-    // 1. CHARGER LES PRODUITS DEPUIS L'API
+    // 1. CHARGER LES PRODUITS
     async function chargerArticles() {
         try {
             const res = await fetch('/api/produits');
@@ -69,7 +70,7 @@
             const corps = document.getElementById('corps-art');
             corps.innerHTML = data.map(p => `
                 <tr>
-                    <td><img src="${p.image}" class="thumb"></td>
+                    <td><img src="${p.image}" class="thumb" onerror="this.src='https://via.placeholder.com/60'"></td>
                     <td>${p.nom}</td>
                     <td>${p.prix}$</td>
                     <td>${p.stock}</td>
@@ -79,52 +80,65 @@
         } catch (err) { console.error("Erreur chargement:", err); }
     }
 
-    // 2. FONCTION POUR PUBLIER (Utilisation de FormData pour Cloudinary)
+    // 2. PUBLIER (FormData synchronisé avec ton nouveau server.js)
     async function ajouter() {
         const fileInput = document.getElementById('imgFile');
         const file = fileInput.files[0];
         const btn = document.getElementById('btnPublier');
         
-        if (!file) { alert("S'il vous plaît, sélectionnez une photo dans votre galerie !"); return; }
+        // Vérification côté client avant d'envoyer
+        if (!file) { 
+            alert("Veuillez choisir une photo dans votre galerie avant de publier."); 
+            return; 
+        }
 
-        // On change le texte du bouton pendant l'envoi
+        const nom = document.getElementById('nom').value;
+        const prix = document.getElementById('prix').value;
+
+        if (!nom || !prix) {
+            alert("Le nom et le prix sont obligatoires.");
+            return;
+        }
+
         btn.innerText = "ENVOI EN COURS...";
         btn.disabled = true;
 
         const formData = new FormData();
-        formData.append('nom', document.getElementById('nom').value);
-        formData.append('prix', document.getElementById('prix').value);
+        formData.append('nom', nom);
+        formData.append('prix', prix);
         formData.append('fournisseurId', document.getElementById('fours').value);
         formData.append('stock', document.getElementById('stk').value);
-        formData.append('image', file); // Le fichier brut pour Multer/Cloudinary
+        formData.append('image', file); 
 
         try {
             const res = await fetch('/api/produits', {
                 method: 'POST',
-                body: formData // On envoie le formData sans Header (le navigateur le gère)
+                body: formData 
             });
 
+            const result = await res.json();
+
             if(res.ok) {
-                alert("Article publié avec succès sur Cloudinary ! ✅");
+                alert("Article publié avec succès ! ✅");
                 location.reload();
             } else {
-                alert("Erreur de publication. Vérifiez vos clés Cloudinary.");
+                alert("Erreur : " + (result.message || "Problème de serveur"));
                 btn.innerText = "PUBLIER SUR CLOUDINARY";
                 btn.disabled = false;
             }
         } catch (error) {
             console.error("Erreur:", error);
-            alert("Erreur serveur.");
+            alert("Le serveur ne répond pas. Vérifie ta connexion.");
             btn.innerText = "PUBLIER SUR CLOUDINARY";
             btn.disabled = false;
         }
     }
 
-    // 3. FONCTION SUPPRIMER
+    // 3. SUPPRIMER
     async function supprimer(id) {
-        if(confirm("Supprimer cet article définitivement ?")) {
-            await fetch('/api/produits/' + id, { method: 'DELETE' });
-            chargerArticles();
+        if(confirm("Supprimer cet article ?")) {
+            const res = await fetch('/api/produits/' + id, { method: 'DELETE' });
+            if(res.ok) chargerArticles();
         }
     }
 
